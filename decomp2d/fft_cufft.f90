@@ -34,7 +34,7 @@ module decomp_2d_fft
   !     use plan(0,j) for r2c transforms;
   !     use plan(2,j) for c2r transforms;
   integer*4, save :: plan(-1:2,3)
-  complex(mytype), device, allocatable, dimension(:) :: cufft_workspace
+  complex(mytype), device, allocatable, contiguous, dimension(:) :: cufft_workspace
 
   ! common code used for all engines, including global variables, 
   ! generic interface definitions and several subroutines
@@ -371,11 +371,18 @@ module decomp_2d_fft
 #endif
     cufft_ws = cufft_ws / sizeof(1._mytype)
     allocate(cufft_workspace(cufft_ws))
+    write(*,*) 'Before Set Area'
+    istat = 0
     do j=1,3
        do i=-1,2
-         istat = cufftSetWorkArea(plan(i,j),cufft_workspace)
+         !!$acc host_data use_device(cufft_workspace)
+         istat = istat + cufftSetWorkArea(plan(i,j),cufft_workspace)
+         !!$acc end host_data
       enddo
     enddo
+    write(*,*) 'After Set Area'
+    if (istat /= 0) &
+       write (*,*) "Cannot set work area for cufft"
 
     return
   end subroutine init_fft_engine
@@ -390,11 +397,14 @@ module decomp_2d_fft
 
     integer :: i,j, istat
 
+    istat = 0
     do j=1,3
        do i=-1,2
-          istat = cufftDestroy(plan(i,j))
+          istat = istat + cufftDestroy(plan(i,j))
        end do
     end do
+    if (istat /= 0) &
+       write (*,*) "Cannot destroy work area for cufft"
 
     deallocate(cufft_workspace)
 
@@ -748,17 +758,30 @@ module decomp_2d_fft
 
        ! ===== 1D FFTs in Z =====
        !call nvtxStartRange("Z r2c_1m_z")
-#ifdef DEBUG
+!#ifdef DEBUG
+       !$acc update self(in_r)
+       write(*,*) 'r2c init in_r'
        dim3d = shape(in_r)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
+       do k = 1, dim3d(3)!,dim3d(3)/8
+         do j = 1, dim3d(2)!,dim3d(2)/8
+            do i = 1, dim3d(1)!,dim3d(1)/8
                   print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_r(i,j,k))
             end do
          end do
        end do
-#endif
+!#endif
        call r2c_1m_z(in_r,wk13)
+       !$acc update self(wk13)
+       write(*,*) 'r2c_1m_z wk13'
+       dim3d = shape(wk13)
+       do k = 1, dim3d(3)!,dim3d(3)/1
+         do j = 1, dim3d(2)!,dim3d(2)/1
+            do i = 1, dim3d(1)!,dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk13(i,j,k)),&
+                                aimag(wk13(i,j,k))
+            end do
+         end do
+       end do
 
        ! ===== Swap Z --> Y; 1D FFTs in Y =====
        if (dims(1)>1) then
@@ -771,9 +794,9 @@ module decomp_2d_fft
 #ifdef DEBUG
           write(*,*) 'c2c_1m_y'
           dim3d = shape(wk2_r2c)
-          do k = 1, dim3d(3),dim3d(3)/8
-            do j = 1, dim3d(2),dim3d(2)/8
-               do i = 1, dim3d(1),dim3d(1)/8
+          do k = 1, dim3d(3),!dim3d(3)/8
+            do j = 1, dim3d(2),!dim3d(2)/8
+               do i = 1, dim3d(1),!dim3d(1)/8
                      print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk2_r2c(i,j,k)),&
                                 aimag(wk2_r2c(i,j,k))
                end do
@@ -815,11 +838,12 @@ module decomp_2d_fft
        call c2c_1m_x(out_c,-1,plan(0,1))
        !call nvtxEndRange
 #ifdef DEBUG
-       write(*,*) 'c2c_1m_x'
+       write(*,*) 'c2c_1m_x out_c'
+       !$acc update self(out_c)
        dim3d = shape(out_c)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
+       do k = 1, dim3d(3)!,dim3d(3)/7
+         do j = 1, dim3d(2)!,dim3d(2)/7
+            do i = 1, dim3d(1)!,dim3d(1)/7
                   print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_c(i,j,k)),&
                              aimag(out_c(i,j,k))
             end do

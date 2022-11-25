@@ -1,34 +1,7 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
+
 module navier
 
   implicit none
@@ -42,7 +15,6 @@ module navier
 contains
   !############################################################################
   !!  SUBROUTINE: solve_poisson
-  !!      AUTHOR: Paul Bartholomew
   !! DESCRIPTION: Takes the intermediate momentum field as input,
   !!              computes div and solves pressure-Poisson equation.
   !############################################################################
@@ -180,7 +152,6 @@ contains
     ph1_yen1 = ph1%yen(1); ph1_yen2 = ph1%yen(2); ph1_yen3 = ph1%yen(3);
     ph1_zen1 = ph1%zen(1); ph1_zen2 = ph1%zen(2); ph1_zen3 = ph1%zen(3);
 
-    !$acc enter data create(sx,sy,sz) async 
     !$acc enter data create(pp1,pgy1,pgz1) async 
     !$acc enter data create(ta1,tb1,tc1) async 
     !$acc wait
@@ -195,10 +166,10 @@ contains
     !WORK X-PENCILS
 
     
-    call derxvp(pp1,ta1,sx,x3d_op_derxvp,xsize(1),nxm,xsize(2),xsize(3))
+    call derxvp(pp1,ta1,x3d_op_derxvp,xsize(1),nxm,xsize(2),xsize(3))
 
-    call interxvp(pgy1,tb1,sx,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
-    call interxvp(pgz1,tc1,sx,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
+    call interxvp(pgy1,tb1,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
+    call interxvp(pgz1,tc1,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
     !$acc exit data delete(ta1,tb1,tc1) async
     !$acc enter data create(duxdxp2,uyp2) async
     !$acc enter data create(uzp2,upi2,duydypi2) async
@@ -212,8 +183,8 @@ contains
     
 
     !WORK Y-PENCILS
-    call interyvp(upi2,duxdxp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
-    call deryvp(duydypi2,uyp2,sy,x3d_op_deryvp,ppyi,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
+    call interyvp(upi2,duxdxp2,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
+    call deryvp(duydypi2,uyp2,x3d_op_deryvp,ppyi,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
 
     !! Compute sum dudx + dvdy !ph1%yst(1):ph1%yen(1),nym,ysize(3)
     !$acc kernels default(present)
@@ -226,15 +197,15 @@ contains
     !$acc enter data create(po3) async
     !$acc wait
      
-    call interyvp(upi2,uzp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
+    call interyvp(upi2,uzp2,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
 
     call transpose_y_to_z(duydypi2,duxydxyp3,ph3)!->NXM NYM NZ
     call transpose_y_to_z(upi2,uzp3,ph3)
 
     !WORK Z-PENCILS
-    call interzvp(pp3,duxydxyp3,sz,x3d_op_intzvp,(ph1%zen(1)-ph1%zst(1)+1),&
+    call interzvp(pp3,duxydxyp3,x3d_op_intzvp,(ph1%zen(1)-ph1%zst(1)+1),&
          (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzm)
-    call derzvp(po3,uzp3,sz,x3d_op_derzvp,(ph1%zen(1)-ph1%zst(1)+1),&
+    call derzvp(po3,uzp3,x3d_op_derzvp,(ph1%zen(1)-ph1%zst(1)+1),&
          (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzm)
 
     !! Compute sum dudx + dvdy + dwdz
@@ -244,37 +215,36 @@ contains
     enddo
     !$acc end kernels
 
-    if (nlock==2) then
-       !$acc kernels default(present)
-       do concurrent (k=1:nzm, j=ph1_zst2:ph1_zen2,i=ph1_zst1:ph1_zen1)
-          pp3(i,j,k)=pp3(i,j,k)-pp3(ph1_zst1,ph1_zst2,nzm)
-       enddo
-       !$acc end kernels
-    endif
+    !if (nlock==2) then
+    !   !$acc kernels default(present)
+    !   do concurrent (k=1:nzm, j=ph1_zst2:ph1_zen2,i=ph1_zst1:ph1_zen1)
+    !      pp3(i,j,k)=pp3(i,j,k)-pp3(ph1_zst1,ph1_zst2,nzm)
+    !   enddo
+    !   !$acc end kernels
+    !endif
     !$acc exit data delete(po3) async
     !$acc exit data delete(duxydxyp3,uzp3) async
     !$acc exit data delete(uzp2,upi2,duydypi2) async
-    !$acc exit data delete(sx,sy,sz) async
     !$acc wait
-    if (test_mode) then
-       !$acc kernels
-       tmax = maxval(abs(pp3(:,:,:)))
-       !tmoy = sum(abs(pp3(:,:,:))) / nvect3
-       tmoy = sum(abs(pp3(:,:,:))) 
-       !$acc end kernels
-       tmoy = tmoy / nvect3
-       call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
-       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
-       call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
-       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
-       if ((nrank==0).and.(nlock.gt.0)) then
-          if (nlock==2) then
-             print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
-          else
-             print *,'DIV U* max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
-          endif
+
+    
+    !$acc kernels
+    tmax = maxval(abs(pp3(:,:,:)))
+    !tmoy = sum(abs(pp3(:,:,:))) / nvect3
+    tmoy = sum(abs(pp3(:,:,:))) 
+    !$acc end kernels
+    tmoy = tmoy / nvect3
+    call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
+    if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
+    call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
+    if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
+    if ((nrank==0).and.(nlock.gt.0)) then
+       if (nlock==2) then
+          print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
+       else
+          print *,'DIV U* max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
        endif
-    end if
+    endif
 
     return
   end subroutine divergence
@@ -289,7 +259,6 @@ contains
   !
   ! input: pp3 - pressure field (on pressure mesh)
   ! output: px1, py1, pz1 - pressure gradients (on velocity mesh)
-  !written by SL 2018
   !############################################################################
   subroutine gradp(px1,py1,pz1,pp3)
 
@@ -311,13 +280,12 @@ contains
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: px1,py1,pz1
 
     !WORK Z-PENCILS
-    !$acc enter data create(sx,sy,sz) async
     !$acc enter data create(pp2,pgz2) async
     !$acc enter data create(ppi3,pgz3) async
     !$acc wait
-    call interzpv(ppi3,pp3,sz,x3d_op_intzpv,&
+    call interzpv(ppi3,pp3,x3d_op_intzpv,&
          (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzm,zsize(3))
-    call derzpv(pgz3,pp3,sz,x3d_op_derzpv,&
+    call derzpv(pgz3,pp3,x3d_op_derzpv,&
          (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzm,zsize(3))
 
     !WORK Y-PENCILS
@@ -328,11 +296,11 @@ contains
     !$acc enter data create(ppi2,pgy2,pgzi2) async
     !$acc wait
 
-    call interypv(ppi2,pp2,sy,x3d_op_intypv,&
+    call interypv(ppi2,pp2,x3d_op_intypv,&
          (ph3%yen(1)-ph3%yst(1)+1),nym,ysize(2),ysize(3))
-    call derypv(pgy2,pp2,sy,x3d_op_derypv,ppy,&
+    call derypv(pgy2,pp2,x3d_op_derypv,ppy,&
          (ph3%yen(1)-ph3%yst(1)+1),nym,ysize(2),ysize(3))
-    call interypv(pgzi2,pgz2,sy,x3d_op_intypv,&
+    call interypv(pgzi2,pgz2,x3d_op_intypv,&
          (ph3%yen(1)-ph3%yst(1)+1),nym,ysize(2),ysize(3))
 
     !WORK X-PENCILS
@@ -344,11 +312,10 @@ contains
     !$acc exit data delete(pp2,pgz2) async
     !$acc wait
 
-    call derxpv(px1,pp1,sx,x3d_op_derxpv,nxm,xsize(1),xsize(2),xsize(3))
-    call interxpv(py1,pgy1,sx,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
-    call interxpv(pz1,pgz1,sx,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
+    call derxpv(px1,pp1,x3d_op_derxpv,nxm,xsize(1),xsize(2),xsize(3))
+    call interxpv(py1,pgy1,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
+    call interxpv(pz1,pgz1,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
     !$acc exit data delete(pp1,pgy1,pgz1) async
-    !$acc exit data delete(sx,sy,sz) async
     !$acc wait
 
     !! For simple cases the dpd.. is not used 

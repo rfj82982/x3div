@@ -1,34 +1,6 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
 
 program xcompact3d
 
@@ -40,7 +12,7 @@ program xcompact3d
   use param,   only : gdt
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
-  use mom,     only : test_du, test_dv, test_dw
+  use case
   use time_integrators, only : int_time
   use nvtx
   use x3d_operator_1d
@@ -74,6 +46,14 @@ program xcompact3d
   !$acc data copyin(x3d_op_deryp%f,x3d_op_deryp%s,x3d_op_deryp%w,x3d_op_deryp%periodic) async
   !$acc data copyin(x3d_op_derzp%f,x3d_op_derzp%s,x3d_op_derzp%w,x3d_op_derzp%periodic) async
   !
+  !$acc data copyin(x3d_op_derxx%f,x3d_op_derxx%s,x3d_op_derxx%w,x3d_op_derxx%periodic) async 
+  !$acc data copyin(x3d_op_deryy%f,x3d_op_deryy%s,x3d_op_deryy%w,x3d_op_deryy%periodic) async
+  !$acc data copyin(x3d_op_derzz%f,x3d_op_derzz%s,x3d_op_derzz%w,x3d_op_derzz%periodic) async
+  !
+  !$acc data copyin(x3d_op_derxxp%f,x3d_op_derxxp%s,x3d_op_derxxp%w,x3d_op_derxxp%periodic) async
+  !$acc data copyin(x3d_op_deryyp%f,x3d_op_deryyp%s,x3d_op_deryyp%w,x3d_op_deryyp%periodic) async
+  !$acc data copyin(x3d_op_derzzp%f,x3d_op_derzzp%s,x3d_op_derzzp%w,x3d_op_derzzp%periodic) async
+  !
   !$acc data copyin(x3d_op_derxvp%f,x3d_op_derxvp%s,x3d_op_derxvp%w,x3d_op_derxvp%periodic) async 
   !$acc data copyin(x3d_op_deryvp%f,x3d_op_deryvp%s,x3d_op_deryvp%w,x3d_op_deryvp%periodic) async 
   !$acc data copyin(x3d_op_derzvp%f,x3d_op_derzvp%s,x3d_op_derzvp%w,x3d_op_derzvp%periodic) async 
@@ -94,7 +74,8 @@ program xcompact3d
   !$acc data copy(dux1,duy1,duz1) async
   !$acc data copy(pp3,px1,py1,pz1) async
   !$acc wait
-  do while(ndt <= ndt_max)
+  call case_init(ux1, uy1, uz1)
+  do while(ndt < ndt_max)
      itr = 1 ! no inner iterations
      !call init_flowfield()
 
@@ -114,9 +95,9 @@ program xcompact3d
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
      call nvtxEndRange
      !
-     !call nvtxStartRange("cor_vel")
-     !call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
-     !call nvtxEndRange
+     call nvtxStartRange("cor_vel")
+     call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
+     call nvtxEndRange
 
      tend = MPI_Wtime()
      telapsed = telapsed + (tend - tstart)
@@ -132,7 +113,17 @@ program xcompact3d
      end if
 
      ndt = ndt + 1
+     call nvtxStartRange("case_postprocess")
+     call case_postprocess(ux1, uy1, uz1, ndt)
+     call nvtxEndRange
+
   end do
+  !$acc end data
+  !$acc end data
+  !$acc end data
+  !$acc end data
+  !$acc end data
+  !$acc end data
   !$acc end data
   !$acc end data
   !$acc end data
@@ -162,6 +153,7 @@ program xcompact3d
      print *, "Compute rate (min-max)[dt/s]: ", ndt / tmin, ndt /  tmax
   end if
 
+  call case_finalize()
   call finalise_xcompact3d(.true.)
 
 end program xcompact3d
