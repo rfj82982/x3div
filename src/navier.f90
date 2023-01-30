@@ -152,9 +152,7 @@ contains
     ph1_yen1 = ph1%yen(1); ph1_yen2 = ph1%yen(2); ph1_yen3 = ph1%yen(3);
     ph1_zen1 = ph1%zen(1); ph1_zen2 = ph1%zen(2); ph1_zen3 = ph1%zen(3);
 
-    !$acc enter data create(pp1,pgy1,pgz1) async 
-    !$acc enter data create(ta1,tb1,tc1) async 
-    !$acc wait
+    !$acc data create(pp1,pgy1,pgz1,ta1,tb1,tc1,duxdxp2,uyp2,uzp2,upi2,duydypi2,duxydxyp3,uzp3,po3) present(pp3,ux1,uy1,uz1) 
     !$acc kernels default(present)
     do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)    
        ta1(i,j,k) = ux1(i,j,k)
@@ -170,16 +168,10 @@ contains
 
     call interxvp(pgy1,tb1,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
     call interxvp(pgz1,tc1,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
-    !$acc exit data delete(ta1,tb1,tc1) async
-    !$acc enter data create(duxdxp2,uyp2) async
-    !$acc enter data create(uzp2,upi2,duydypi2) async
-    !$acc wait
    
     call transpose_x_to_y(pp1,duxdxp2,ph2)!->NXM NY NZ
     call transpose_x_to_y(pgy1,uyp2,ph2)
     call transpose_x_to_y(pgz1,uzp2,ph2)
-    !$acc exit data delete(pp1,pgy1,pgz1) async
-    !$acc wait
     
 
     !WORK Y-PENCILS
@@ -192,10 +184,6 @@ contains
       duydypi2(i,j,k) = duydypi2(i,j,k) + upi2(i,j,k)
     enddo
     !$acc end kernels
-    !$acc exit data delete(duxdxp2,uyp2) async
-    !$acc enter data create(duxydxyp3,uzp3) async
-    !$acc enter data create(po3) async
-    !$acc wait
      
     call interyvp(upi2,uzp2,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
 
@@ -222,29 +210,26 @@ contains
     !   enddo
     !   !$acc end kernels
     !endif
-    !$acc exit data delete(po3) async
-    !$acc exit data delete(duxydxyp3,uzp3) async
-    !$acc exit data delete(uzp2,upi2,duydypi2) async
-    !$acc wait
-
     
-    !$acc kernels
-    tmax = maxval(abs(pp3(:,:,:)))
-    !tmoy = sum(abs(pp3(:,:,:))) / nvect3
-    tmoy = sum(abs(pp3(:,:,:))) 
-    !$acc end kernels
-    tmoy = tmoy / nvect3
-    call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
-    if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
-    call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
-    if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
-    if ((nrank==0).and.(nlock.gt.0)) then
-       if (nlock==2) then
-          print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
-       else
-          print *,'DIV U* max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
-       endif
-    endif
+    !!$acc kernels
+    !tmax = maxval(abs(pp3(:,:,:)))
+    !!tmoy = sum(abs(pp3(:,:,:))) / nvect3
+    !tmoy = sum(abs(pp3(:,:,:))) 
+    !!$acc end kernels
+    !tmoy = tmoy / nvect3
+    !call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
+    !if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
+    !call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
+    !if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
+    !if ((nrank==0).and.(nlock.gt.0)) then
+    !   if (nlock==2) then
+    !      print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
+    !   else
+    !      print *,'DIV U* max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
+    !   endif
+    !endif
+
+    !$acc end data
 
     return
   end subroutine divergence

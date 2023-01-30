@@ -12,6 +12,7 @@ program xcompact3d
   use param,   only : gdt
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
+  use decomp_2d_poisson, only : ax, bx, ay, by, az, bz, kxyz
   use case
   use time_integrators, only : int_time
   use nvtx
@@ -69,11 +70,13 @@ program xcompact3d
   !$acc data copyin(x3d_op_intxpv%f,x3d_op_intxpv%s,x3d_op_intxpv%w,x3d_op_intxpv%periodic) async 
   !$acc data copyin(x3d_op_intypv%f,x3d_op_intypv%s,x3d_op_intypv%w,x3d_op_intypv%periodic) async 
   !$acc data copyin(x3d_op_intzpv%f,x3d_op_intzpv%s,x3d_op_intzpv%w,x3d_op_intzpv%periodic) async 
+  !$acc data copyin(kxyz,az,bz,ay,by,ax,bx) async 
   !
   !$acc data copy(ux1,uy1,uz1) async 
   !$acc data copy(dux1,duy1,duz1) async
   !$acc data copy(pp3,px1,py1,pz1) async
   !$acc wait
+  !call acc_present_dump()
   call case_init(ux1, uy1, uz1)
   do while(ndt < ndt_max)
      itr = 1 ! no inner iterations
@@ -87,14 +90,14 @@ program xcompact3d
      call nvtxStartRange("int_time")
      call int_time(ux1,uy1,uz1,dux1,duy1,duz1)
      call nvtxEndRange
-     !
-     !!do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
-     !!  divu3(:,:,:) = zero
-     !!enddo
+     !!
+     !!!do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+     !!!  divu3(:,:,:) = zero
+     !!!enddo
      call nvtxStartRange("solve_poisson")
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
      call nvtxEndRange
-     !
+     !!
      call nvtxStartRange("cor_vel")
      call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
      call nvtxEndRange
@@ -113,11 +116,12 @@ program xcompact3d
      end if
 
      ndt = ndt + 1
-     call nvtxStartRange("case_postprocess")
-     call case_postprocess(ux1, uy1, uz1, ndt)
-     call nvtxEndRange
+     !call nvtxStartRange("case_postprocess")
+     !call case_postprocess(ux1, uy1, uz1, ndt)
+     !call nvtxEndRange
 
   end do
+  !$acc end data
   !$acc end data
   !$acc end data
   !$acc end data

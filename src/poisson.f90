@@ -37,12 +37,12 @@ module decomp_2d_poisson
   type(DECOMP_INFO), save :: sp
 
   ! store sine/cosine factors
-  real(mytype), save, allocatable, dimension(:) :: az,bz
-  real(mytype), save, allocatable, dimension(:) :: ay,by
-  real(mytype), save, allocatable, dimension(:) :: ax,bx
+  real(mytype), save, allocatable, dimension(:),public :: az,bz
+  real(mytype), save, allocatable, dimension(:),public :: ay,by
+  real(mytype), save, allocatable, dimension(:),public :: ax,bx
 
   ! wave numbers
-  complex(mytype), save, allocatable, dimension(:,:,:) :: kxyz
+  complex(mytype), save, allocatable, dimension(:,:,:), public :: kxyz
   !wave numbers for stretching in a pentadiagonal matrice
   complex(mytype), save, allocatable, dimension(:,:,:,:) :: a,a2,a3
   ! work arrays, 
@@ -320,10 +320,7 @@ contains
        fft_initialised = .true.
     end if
     
-    !$acc enter data create(cw1) async
-    !$acc enter data create(kxyz) async
-    !$acc enter data create(az, bz, ay, by, ax, bx) async
-    !$acc wait
+    !$acc data create(cw1) present(kxyz,az,bz,ay,by,ax,bx,rhs)
     ! compute r2c transform 
     call nvtxStartRange("call decomp_fft_r2c")
     call decomp_2d_fft_3d(rhs,cw1)
@@ -370,7 +367,7 @@ contains
          cw1_tmp = zero
       else
          cw1_tmp = cmplx(real(cw1_tmp,kind=mytype) / (-tmp1), &
-                           aimag(cw1_tmp) / (-tmp2), kind=mytype)
+                        aimag(cw1_tmp)             / (-tmp2), kind=mytype)
       end if
       
       ! post-processing backward
@@ -402,9 +399,9 @@ contains
     call nvtxEndRange
 #ifdef DEBUG
     dim3d = shape(cw1)
-    do k = 1, dim3d(3),dim3d(3)/2+1
-      do j = 1, dim3d(2),dim3d(2)/2+1
-        do i = 1, dim3d(1),dim3d(1)/2+1
+    do k = 1, dim3d(3)!,dim3d(3)/2+1
+      do j = 1, dim3d(2)!,dim3d(2)/2+1
+        do i = 1, dim3d(1)!,dim3d(1)/2+1
           print "(i3,i3,i3,1x,e12.5,1x,e12.5)", i, j, k, real(cw1(i,j,k)),&
                              aimag(cw1(i,j,k))
         enddo
@@ -415,9 +412,7 @@ contains
     call nvtxStartRange("call decomp_c2r")
     call decomp_2d_fft_3d(cw1,rhs)
     call nvtxEndRange
-    !$acc exit data delete(kxyz) async
-    !$acc exit data delete(az,bz,ay,by,ax,bx) async
-    !$acc exit data delete(cw1) async 
+    !$acc end data
 
     !   call decomp_2d_fft_finalize
 
@@ -919,7 +914,7 @@ contains
           xt1_rl = one + two * ailcaix6 * cos(rlexs)
           yt1_rl = one + two * ailcaiy6 * cos(rleys)
           zt1_rl = one + two * ailcaiz6 * cos(rlezs)
-!
+
           xt2 = xk2(i) * ((((ytt1_rl + ytt_rl) / yt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
           yt2 = yk2(j) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
           zt2 = zk2(k) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ytt1_rl + ytt_rl) / yt1_rl))**2)

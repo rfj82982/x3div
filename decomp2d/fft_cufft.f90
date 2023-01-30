@@ -16,6 +16,7 @@ module decomp_2d_fft
   use decomp_2d  ! 2D decomposition module
   use iso_c_binding
   use cudafor
+  use openacc
   use cufft
 
   implicit none
@@ -34,7 +35,8 @@ module decomp_2d_fft
   !     use plan(0,j) for r2c transforms;
   !     use plan(2,j) for c2r transforms;
   integer*4, save :: plan(-1:2,3)
-  complex(mytype), device, allocatable, contiguous, dimension(:) :: cufft_workspace
+  !complex(mytype), device, allocatable, contiguous, dimension(:) :: cufft_workspace
+  complex(mytype), device, allocatable, dimension(:) :: cufft_workspace
 
   ! common code used for all engines, including global variables, 
   ! generic interface definitions and several subroutines
@@ -278,7 +280,6 @@ module decomp_2d_fft
     else if (format == PHYSICAL_IN_Z) then
 
        ! For C2C transforms
-       write(*,*) 'Create the plans'
        call c2c_1m_z_plan(plan(-1,3), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
        call c2c_1m_y_plan(plan(-1,2), ph, CUFFT_Z2Z,ws)
@@ -339,7 +340,6 @@ module decomp_2d_fft
     else if (format == PHYSICAL_IN_Z) then
 
        ! For C2C transforms
-       write(*,*) 'Create the plans'
        call c2c_1m_z_plan(plan(-1,3), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
        call c2c_1m_y_plan(plan(-1,2), ph, CUFFT_C2C,ws)
@@ -370,17 +370,14 @@ module decomp_2d_fft
     end if
 #endif
     cufft_ws = cufft_ws / sizeof(1._mytype)
+    !call acc_present_dump()
     allocate(cufft_workspace(cufft_ws))
-    write(*,*) 'Before Set Area'
     istat = 0
     do j=1,3
        do i=-1,2
-         !!$acc host_data use_device(cufft_workspace)
          istat = istat + cufftSetWorkArea(plan(i,j),cufft_workspace)
-         !!$acc end host_data
       enddo
     enddo
-    write(*,*) 'After Set Area'
     if (istat /= 0) &
        write (*,*) "Cannot set work area for cufft"
 
@@ -533,7 +530,8 @@ module decomp_2d_fft
     complex(mytype), dimension(:,:,:), intent(OUT) :: output
 
     integer :: istat
-
+   
+    !$acc data present(input,output)
 #ifdef DOUBLE_PREC
     !$acc host_data use_device(input,output)
     istat = cufftExecD2Z(plan(0,3), input, output)
@@ -543,6 +541,7 @@ module decomp_2d_fft
     istat = cufftExecR2C(plan(0,3), input, output)
     !$acc end host_data
 #endif
+    !$acc end data
     if (istat /= 0) &
        write (*,*) "Error in executing r2c_1m_z istat ", istat
 
@@ -619,8 +618,7 @@ module decomp_2d_fft
     complex(mytype), allocatable, dimension(:,:,:) :: wk1
 #endif
     
-    !$acc enter data create(wk2_c2c) async
-    !$acc wait
+    !$acc data create(wk2_c2c) present(in,out)
     if (format==PHYSICAL_IN_X .AND. isign==DECOMP_2D_FFT_FORWARD .OR.  &
          format==PHYSICAL_IN_Z .AND. isign==DECOMP_2D_FFT_BACKWARD) then
 
@@ -709,11 +707,11 @@ module decomp_2d_fft
     end if
 
 #ifndef OVERWRITE
-    !acc exit data delete(wk1) async
+    !$acc exit data delete(wk1) async
+    !$acc wait 
     deallocate (wk1)
 #endif
-    !acc exit data delete(wk2_c2c) async
-    !acc wait
+    !$acc end data
 
     return
   end subroutine fft_3d_c2c
@@ -731,8 +729,7 @@ module decomp_2d_fft
     integer :: i, j ,k
     integer, dimension(3) :: dim3d
 
-    !$acc enter data create(wk13,wk2_r2c)
-    !$acc wait
+    !$acc data create(wk13,wk2_r2c) present(in_r,out_c)
     if (format==PHYSICAL_IN_X) then
 
        ! ===== 1D FFTs in X =====
@@ -758,7 +755,7 @@ module decomp_2d_fft
 
        ! ===== 1D FFTs in Z =====
        !call nvtxStartRange("Z r2c_1m_z")
-!#ifdef DEBUG
+#ifdef DEBUG
        !$acc update self(in_r)
        write(*,*) 'r2c init in_r'
        dim3d = shape(in_r)
@@ -769,20 +766,9 @@ module decomp_2d_fft
             end do
          end do
        end do
-!#endif
+#endif
+       !call acc_present_dump()
        call r2c_1m_z(in_r,wk13)
-       !$acc update self(wk13)
-       write(*,*) 'r2c_1m_z wk13'
-       dim3d = shape(wk13)
-       do k = 1, dim3d(3)!,dim3d(3)/1
-         do j = 1, dim3d(2)!,dim3d(2)/1
-            do i = 1, dim3d(1)!,dim3d(1)/8
-                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk13(i,j,k)),&
-                                aimag(wk13(i,j,k))
-            end do
-         end do
-       end do
-
        ! ===== Swap Z --> Y; 1D FFTs in Y =====
        if (dims(1)>1) then
           !call nvtxStartRange("Z1 transpose_z_to_y")
@@ -853,8 +839,7 @@ module decomp_2d_fft
        write(*,*)
 #endif
     end if
-    !$acc exit data delete(wk13,wk2_r2c) async
-    !$acc wait
+    !$acc end data 
     return
   end subroutine fft_3d_r2c
 
@@ -874,8 +859,7 @@ module decomp_2d_fft
     complex(mytype), allocatable, dimension(:,:,:) :: wk1
 #endif
 
-    !$acc enter data create(wk2_r2c,wk13)
-    !$acc wait
+    !$acc data create(wk2_r2c,wk13) present(in_c,out_r)
     if (format==PHYSICAL_IN_X) then
 
        ! ===== 1D FFTs in Z =====
@@ -911,9 +895,10 @@ module decomp_2d_fft
 #ifdef DEBUG
        write(*,*) 'Back Init c2c_1m_x line 788'
        dim3d = shape(in_c)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
+       !$acc update self(in_c)
+       do k = 1, dim3d(3)!,dim3d(3)/8
+         do j = 1, dim3d(2)!,dim3d(2)/8
+            do i = 1, dim3d(1)!,dim3d(1)/8
                   print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
                              aimag(in_c(i,j,k))
             end do
@@ -1048,10 +1033,11 @@ module decomp_2d_fft
        call c2r_1m_z(wk13,out_r)
 #ifdef DEBUG
        write(*,*) 'Back2 c2r_1m_z out_r line 902'
+       !$acc update self(out_r)
        dim3d = shape(out_r)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
+       do k = 1, dim3d(3)!,dim3d(3)/8
+         do j = 1, dim3d(2)!,dim3d(2)/8
+            do i = 1, dim3d(1)!,dim3d(1)/8
                   print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_r(i,j,k))
             end do
          end do
@@ -1064,10 +1050,11 @@ module decomp_2d_fft
 
 #ifndef OVERWRITE
     !$acc exit data delete(wk1) async
+    !$acc wait
     deallocate (wk1)
 #endif
-    !$acc exit data delete(wk2_r2c,wk13) async
-    !$acc wait
+    !$acc end data
+
 
     return
   end subroutine fft_3d_c2r

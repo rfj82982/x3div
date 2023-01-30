@@ -214,6 +214,7 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
 
   enddo
   !$acc end kernels
+  call nvtxEndRange
 
   ! Solve tri-diagonal system
   call nvtxStartRange("Thomas X der")

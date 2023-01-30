@@ -143,10 +143,10 @@ contains
     use decomp_2d, only : mytype, real_type, decomp_2d_abort, xsize, ysize, zsize
     use param, only : half, two, xnu, dt
     use variables, only : nx, ny, nz, ppy
-    use var, only : ux2,uy2,uz2,ux3,uy3,uz3
+    use var, only : ux2,ux3
     use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1
-    use var, only : ta2,tb2,tc2
-    use var, only : ta3,tb3,tc3
+    use var, only : ta2
+    use var, only : ta3
     use x3d_derive
     use x3d_transpose
     use x3d_operator_1d
@@ -170,46 +170,44 @@ contains
     if (mod(ndt, 1) /= 0) return
 
     ! This is needed to compute derivatives
-    !$acc enter data create(ta1,tb1,tc1) async 
-    !$acc enter data create(td1,te1,tf1) async
-    !$acc enter data create(tg1,th1,ti1) async
-    !$acc enter data create(ux2,uy2,uz2) async 
-    !$acc enter data create(ta2,tb2,tc2) async 
-    !$acc enter data create(ux3,uy3,uz3) async 
-    !$acc enter data create(ta3,tb3,tc3) async 
-    !$acc wait
+    !$acc data create(ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,ux2,ta2,ux3,ta3) present(ux1,uy1,uz1)
     ! Compute X derivative
     call derx (ta1,ux1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
     call derx (tb1,uy1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
     call derx (tc1,uz1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
     
-    call x3d_transpose_x_to_y(ux1, ux2)
-    call x3d_transpose_x_to_y(uy1, uy2)
-    call x3d_transpose_x_to_y(uz1, uz2)
-    
+    ! For transpose we use only dummy array ux => BE CAREFUL TO HAVE THE CORRECT VELOCITY
     ! Compute Y derivative and transpose back to X
+    call x3d_transpose_x_to_y(ux1, ux2)
     call dery (ta2,ux2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (tb2,uy2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (tc2,uz2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    
     call x3d_transpose_y_to_x(ta2, td1)
-    call x3d_transpose_y_to_x(tb2, te1)
-    call x3d_transpose_y_to_x(tc2, tf1)
-
-    call x3d_transpose_y_to_z(ux2, ux3)
-    call x3d_transpose_y_to_z(uy2, uy3)
-    call x3d_transpose_y_to_z(uz2, uz3)
+    
+    call x3d_transpose_x_to_y(uy1, ux2)
+    call dery (ta2,ux2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call x3d_transpose_y_to_x(ta2, te1)
+    
+    call x3d_transpose_x_to_y(uz1, ux2)
+    call dery (ta2,ux2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call x3d_transpose_y_to_x(ta2, tf1)
 
     ! Compute Z derivative and transpose back to X
+    call x3d_transpose_x_to_y(ux1, ux2)
+    call x3d_transpose_y_to_z(ux2, ux3)
     call derz (ta3,ux3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (tb3,uy3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (tc3,uz3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
     call x3d_transpose_z_to_y(ta3, ta2)
-    call x3d_transpose_z_to_y(tb3, tb2)
-    call x3d_transpose_z_to_y(tc3, tc2)
     call x3d_transpose_y_to_x(ta2, tg1)
-    call x3d_transpose_y_to_x(tb2, th1)
-    call x3d_transpose_y_to_x(tc2, ti1)
+
+    call x3d_transpose_x_to_y(uy1, ux2)
+    call x3d_transpose_y_to_z(ux2, ux3)
+    call derz (ta3,ux3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call x3d_transpose_z_to_y(ta3, ta2)
+    call x3d_transpose_y_to_x(ta2, th1)
+
+    call x3d_transpose_x_to_y(uz1, ux2)
+    call x3d_transpose_y_to_z(ux2, ux3)
+    call derz (ta3,ux3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call x3d_transpose_z_to_y(ta3, ta2)
+    call x3d_transpose_y_to_x(ta2, ti1)
     !du/dx=ta1   du/dy=td1   du/dz=tg1
     !dv/dx=tb1   dv/dy=te1   dv/dz=th1
     !dw/dx=tc1   dw/dy=tf1   dw/dz=ti1
@@ -275,28 +273,37 @@ contains
     call derxx(tc1,uz1,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
 
     ! Compute Y second derivative and transpose back to X
+    call x3d_transpose_x_to_y(ux1, ux2)
     call deryy(ta2,ux2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
-    call deryy(tb2,uy2,x3d_op_deryy ,ysize(1),ysize(2),ysize(3))
-    call deryy(tc2,uz2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
     call x3d_transpose_y_to_x(ta2, td1)
-    call x3d_transpose_y_to_x(tb2, te1)
-    call x3d_transpose_y_to_x(tc2, tf1)
+    
+    call x3d_transpose_x_to_y(uy1, ux2)
+    call deryy(ta2,ux2,x3d_op_deryy ,ysize(1),ysize(2),ysize(3))
+    call x3d_transpose_y_to_x(ta2, te1)
+    
+    call x3d_transpose_x_to_y(uz1, ux2)
+    call deryy(ta2,ux2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
+    call x3d_transpose_y_to_x(ta2, tf1)
 
     ! Compute Z second derivative and transpose back to X
+    call x3d_transpose_x_to_y(ux1, ux2)
+    call x3d_transpose_y_to_z(ux2, ux3)
     call derzz(ta3,ux3,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
-    call derzz(tb3,uy3,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
-    call derzz(tc3,uz3,x3d_op_derzz ,zsize(1),zsize(2),zsize(3))
     call x3d_transpose_z_to_y(ta3, ta2)
-    call x3d_transpose_z_to_y(tb3, tb2)
-    call x3d_transpose_z_to_y(tc3, tc2)
     call x3d_transpose_y_to_x(ta2, tg1)
-    call x3d_transpose_y_to_x(tb2, th1)
-    call x3d_transpose_y_to_x(tc2, ti1)
-    !$acc exit data delete(ta3,tb3,tc3) async
-    !$acc exit data delete(ux3,uy3,uz3) async
-    !$acc exit data delete(ta2,tb2,tc2) async
-    !$acc exit data delete(ux2,uy2,uz2) async
-    !$acc wait
+    
+    call x3d_transpose_x_to_y(uy1, ux2)
+    call x3d_transpose_y_to_z(ux2, ux3)
+    call derzz(ta3,ux3,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
+    call x3d_transpose_z_to_y(ta3, ta2)
+    call x3d_transpose_y_to_x(ta2, th1)
+    
+    call x3d_transpose_x_to_y(uz1, ux2)
+    call x3d_transpose_y_to_z(ux2, ux3)
+    call derzz(ta3,ux3,x3d_op_derzz ,zsize(1),zsize(2),zsize(3))
+    call x3d_transpose_z_to_y(ta3, ta2)
+    call x3d_transpose_y_to_x(ta2, ti1)
+    !!$acc wait
     !d²u/dxx=ta1   d²u/dyy=td1   d²u/dzz=tg1
     !d²v/dxx=tb1   d²v/dyy=te1   d²v/dzz=th1
     !d²w/dxx=tc1   d²w/dyy=tf1   d²w/dzz=ti1
@@ -318,10 +325,7 @@ contains
     if (code /= 0) call decomp_2d_abort(__FILE__, __LINE__, code, &
                                         "MPI_ALLREDUCE")
     eps2 = -xnu * eps2 / (nx*ny*nz)
-    !$acc exit data delete(tg1,th1,ti1) async
-    !$acc exit data delete(td1,te1,tf1) async
-    !$acc exit data delete(ta1,tb1,tc1) async
-    !$acc wait
+    !$acc end data
 
     ! Log
     if (nrank == 0) then
