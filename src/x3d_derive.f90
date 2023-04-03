@@ -4,11 +4,11 @@
 
 module x3d_derive
 
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
   use x3d_operator_1d, only : x3doperator1d
   use param
   use thomas
-  use nvtx
+  !use nvtx
   
   implicit none
 
@@ -17,7 +17,7 @@ module x3d_derive
 
   ABSTRACT INTERFACE
      SUBROUTINE DERIVATIVE_X(t,u,x3dop,nx,ny,nz)
-       use decomp_2d, only : mytype
+       use decomp_2d_constants, only : mytype
        use x3d_operator_1d, only : x3doperator1d
        integer, intent(in) :: nx,ny,nz
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
@@ -25,7 +25,7 @@ module x3d_derive
        type(x3doperator1d), intent(in) :: x3dop
      END SUBROUTINE DERIVATIVE_X
      SUBROUTINE DERIVATIVE_Y(t,u,x3dop,pp,nx,ny,nz)
-       use decomp_2d, only : mytype
+       use decomp_2d_constants, only : mytype
        use x3d_operator_1d, only : x3doperator1d
        integer, intent(in) :: nx,ny,nz
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
@@ -34,7 +34,7 @@ module x3d_derive
        type(x3doperator1d), intent(in) :: x3dop
      END SUBROUTINE DERIVATIVE_Y
      SUBROUTINE DERIVATIVE_YY(t,u,x3dop,nx,ny,nz)
-       use decomp_2d, only : mytype
+       use decomp_2d_constants, only : mytype
        use x3d_operator_1d, only : x3doperator1d
        integer, intent(in) :: nx,ny,nz
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
@@ -42,7 +42,7 @@ module x3d_derive
        type(x3doperator1d), intent(in) :: x3dop
      END SUBROUTINE DERIVATIVE_YY
      SUBROUTINE DERIVATIVE_Z(t,u,x3dop,nx,ny,nz)
-       use decomp_2d, only : mytype
+       use decomp_2d_constants, only : mytype
        use x3d_operator_1d, only : x3doperator1d
        integer, intent(in) :: nx,ny,nz
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
@@ -195,7 +195,7 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
   ! Local variables
   integer :: i, j, k
 
-  call nvtxStartRange("RHS X der")
+  !call nvtxStartRange("RHS X der")
   !$acc kernels default(present)
   do concurrent (k=1:nz, j=1:ny)
      ! Compute r.h.s.
@@ -214,12 +214,12 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
 
   enddo
   !$acc end kernels
-  call nvtxEndRange
+  !call nvtxEndRange
 
   ! Solve tri-diagonal system
-  call nvtxStartRange("Thomas X der")
+  !call nvtxStartRange("Thomas X der")
   call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
-  call nvtxEndRange
+  !call nvtxEndRange
 
 end subroutine derx_00
 
@@ -367,7 +367,7 @@ subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz)
   integer :: i, j, k
 
   ! Compute r.h.s.
-  call nvtxStartRange("RHS Y der")
+  !call nvtxStartRange("RHS Y der")
   !$acc kernels default(present)
   do concurrent (k=1:nz)
      do concurrent (i=1:nx)
@@ -392,12 +392,12 @@ subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz)
      enddo
   enddo
   !$acc end kernels
-  call nvtxEndRange
+  !call nvtxEndRange
 
   ! Solve tri-diagonal system
-  call nvtxStartRange("Thomas Y der")
+  !call nvtxStartRange("Thomas Y der")
   call ythomas(ty, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
-  call nvtxEndRange
+  !call nvtxEndRange
   
   ! Apply stretching if needed
   if (istret /= 0) then
@@ -597,7 +597,7 @@ subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
   endif
 
   ! Compute r.h.s.
-  call nvtxStartRange("RHS Z der")
+  !call nvtxStartRange("RHS Z der")
   !$acc kernels default(present)
   do concurrent (j=1:ny, i=1:nx)
      tz(i,j,1) = afkz*(uz(i,j,2)-uz(i,j,nz  )) &
@@ -620,12 +620,12 @@ subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
                 + bfkz*(uz(i,j,2)-uz(i,j,nz-2))
   enddo
   !$acc end kernels
-  call nvtxEndRange
+  !call nvtxEndRange
 
   ! Solve tri-diagonal system
-  call nvtxStartRange("Thomas Z der")
+  !call nvtxStartRange("Thomas Z der")
   call zthomas(tz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
-  call nvtxEndRange
+  !call nvtxEndRange
 
 end subroutine derz_00
 

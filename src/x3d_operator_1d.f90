@@ -4,7 +4,8 @@
 
 module x3d_operator_1d
 
-  use decomp_2d, only: mytype, nrank
+  use decomp_2d_constants, only: mytype
+  use decomp_2d_mpi, only: nrank
 
   implicit none
 
@@ -455,7 +456,6 @@ contains
    !
    subroutine prepare(b, c, f, s, w, n)
 
-      use decomp_2d, only: mytype
       use param, only: one
 
       implicit none
@@ -482,7 +482,7 @@ contains
                                cfn, dfn, alfam, afm, alfai, afi, bfi, &
                                d, n, ncl1, ncln)
 
-      use decomp_2d, only: mytype, decomp_2d_abort
+      use decomp_2d_mpi, only: mytype, decomp_2d_abort
       use param
 
       implicit none
@@ -650,7 +650,7 @@ contains
                                 alsatt, astt, bstt, cstt, &
                                 alsai, asi, bsi, csi, dsi, d2, n, ncl1, ncln)
 
-      use decomp_2d, only: decomp_2d_abort
+      use decomp_2d_mpi, only: decomp_2d_abort
       use x3d_precision, only: pi, twopi
       use param
       use variables, only: nu0nu, cnu
@@ -920,7 +920,6 @@ contains
                             alcaix6, acix6, bcix6, &
                             ailcaix6, aicix6, bicix6, cicix6, dicix6)
 
-      use decomp_2d, only: mytype
       use param, only: zero, half, one, two, three, four, nine, ten, ipinter, ifirstder
 
       implicit none
@@ -986,7 +985,6 @@ contains
                             cwi6, cifi6, cici6, cibi6, cifip6, &
                             cisip6, ciwip6, cisi6, ciwi6)
 
-      use decomp_2d, only: mytype
       use param, only: zero, half, one, two, three, four, nine, ten, ipinter, ifirstder
 
       implicit none

@@ -4,7 +4,9 @@
 
 module tools
 
-  use decomp_2d, only : mytype, real_type, xsize, decomp_2d_abort
+  use decomp_2d_constants, only : mytype, real_type
+  use decomp_2d_mpi, only : decomp_2d_abort
+  use decomp_2d, only : xsize
   use variables, only : nx, ny, nz
   use param, only : zero
 

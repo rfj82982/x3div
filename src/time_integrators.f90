@@ -6,8 +6,9 @@ module time_integrators
 
   use param, only : itr, ntime, gdt
   use variables
-  use decomp_2d, only : mytype, xsize, nrank
-  use nvtx
+  use decomp_2d_constants, only : mytype
+  use decomp_2d, only: xsize
+  !use nvtx
 
   implicit none
 
@@ -34,14 +35,14 @@ contains
     kmax = xsize(3)
 
 
-    call nvtxStartRange("time loop")
+    !call nvtxStartRange("time loop")
     ! We have only Euler
     !$acc kernels default(present)
     do concurrent (k=1:kmax, j=1:jmax, i=1:imax)
       var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
     enddo
     !$acc end kernels
-    call nvtxEndRange
+    !call nvtxEndRange
     
     return
 

@@ -6,7 +6,7 @@
 pure function rl(complexnumber)
 
   !use param
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
 
   implicit none
 
@@ -24,7 +24,7 @@ end function rl
 pure function iy(complexnumber)
 
   !use param
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
 
   implicit none
 
@@ -41,7 +41,7 @@ end function iy
 !##################################################################
 pure function cx(realpart,imaginarypart)
 
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
 
   implicit none
 
@@ -59,7 +59,7 @@ end function cx
 subroutine boot_xcompact3d()
 
   use MPI
-  use decomp_2d, only : nrank, nproc, decomp_2d_abort
+  use decomp_2d_mpi, only : nrank, nproc, decomp_2d_abort
 
   implicit none
 

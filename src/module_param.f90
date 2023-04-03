@@ -5,7 +5,7 @@
 module variables
   !USE param
   !USE var
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
 
   ! Boundary conditions : ncl = 2 --> Dirichlet
   ! Boundary conditions : ncl = 1 --> Free-slip
@@ -78,7 +78,7 @@ end module variables
 !############################################################################
 module param
 
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
 
   integer :: nclx1,nclxn,ncly1,nclyn,nclz1,nclzn
   integer :: nclxS1,nclxSn,nclyS1,nclySn,nclzS1,nclzSn

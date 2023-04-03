@@ -20,12 +20,12 @@ contains
   !############################################################################
   SUBROUTINE solve_poisson(pp3, px1, py1, pz1, ux1, uy1, uz1)
 
-    use decomp_2d, only : mytype
+    use decomp_2d_constants, only : mytype
     USE decomp_2d, ONLY : xsize, zsize, ph1
     USE decomp_2d_poisson, ONLY : poisson
     USE variables, ONLY : nzm
     USE param, ONLY : npress
-    use nvtx
+    !use nvtx
 
     implicit none
 
@@ -41,17 +41,17 @@ contains
 
     nlock = 1 !! Corresponds to computing div(u*)
 
-    call nvtxStartRange("divergence")
+    !call nvtxStartRange("divergence")
     CALL divergence(pp3(:,:,:,1),ux1,uy1,uz1,nlock)
-    call nvtxEndRange
+    !call nvtxEndRange
     !
-    call nvtxStartRange("poisson_000")
+    !call nvtxStartRange("poisson_000")
     CALL poisson(pp3(:,:,:,1))
-    call nvtxEndRange
+    !call nvtxEndRange
     !
-    call nvtxStartRange("gradp")
+    !call nvtxStartRange("gradp")
     CALL gradp(px1,py1,pz1,pp3(:,:,:,1))
-    call nvtxEndRange
+    !call nvtxEndRange
 
   END SUBROUTINE solve_poisson
   !############################################################################
@@ -64,7 +64,7 @@ contains
   !############################################################################
   subroutine cor_vel (ux,uy,uz,px,py,pz)
 
-    use decomp_2d, only : mytype
+    use decomp_2d_constants, only : mytype
     use decomp_2d, only : xsize
     USE variables
     USE param
@@ -101,9 +101,10 @@ contains
 
     use x3d_operator_1d
     use x3d_staggered
-    use decomp_2d, only : mytype, real_type, decomp_2d_warning
+    use decomp_2d_constants, only : mytype, real_type
+    use decomp_2d_mpi, only : nrank, nproc, decomp_2d_warning
     use param
-    use decomp_2d, only : nrank, ph1, ph2, ph3, nproc
+    use decomp_2d, only : ph1, ph2, ph3
     use decomp_2d, only : xsize, ysize, zsize
     use decomp_2d, only : nx_global, ny_global, nz_global
     use decomp_2d, only : transpose_x_to_y, &
@@ -251,7 +252,8 @@ contains
     use x3d_staggered
     use x3d_transpose
     USE param
-    USE decomp_2d, only: mytype, xsize, ysize, zsize, ph2, ph3
+    USE decomp_2d_constants, only: mytype
+    USE decomp_2d, only: xsize, ysize, zsize, ph2, ph3
     use decomp_2d, only: xstart, xend, ystart, yend, zstart, zend
     USE variables
     USE var, only: pp1,pgy1,pgz1,pp2,ppi2,pgy2,pgz2,pgzi2,&

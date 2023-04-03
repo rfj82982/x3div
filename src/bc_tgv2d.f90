@@ -6,8 +6,9 @@ module bc_tgv2d
 
   use MPI
 
-  use decomp_2d, only : mytype, real_type, decomp_2d_warning
-  use decomp_2d, only : nrank, nproc, xsize, xstart
+  use decomp_2d_constants, only : mytype, real_type
+  use decomp_2d_mpi, only : nrank, nproc, decomp_2d_warning
+  use decomp_2d, only : xsize, xstart
   use x3d_precision, only : pi, twopi
   use variables, only : nx, ny, nz
   use param, only : dx, dy, dz, xlx, yly, zlz, dt, xnu
