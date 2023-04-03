@@ -103,30 +103,22 @@ INC += -I$(DECOMP_INSTALL_DIR)/include
 # Users build/link targets
 LFLAGS += -L$(DECOMP_INSTALL_DIR)/lib -ldecomp2d
 
-########FFT settings##########
-#ifeq ($(FFT),fftw3)
-#  #FFTW3_PATH=/usr
-#  #FFTW3_PATH=/usr/lib64
-#  FFTW3_PATH=/scratch21/eb/gpu/software/FFTW/3.3.10-gompi-2021b
-#  INC=-I$(FFTW3_PATH)/include
-#  LIBFFT=-L$(FFTW3_PATH) -lfftw3 -lfftw3f
-#else ifeq ($(FFT),fftw3_f03)
-#  FFTW3_PATH=/usr                                #ubuntu # apt install libfftw3-dev
-#  #FFTW3_PATH=/usr/lib64                         #fedora # dnf install fftw fftw-devel
-#  #FFTW3_PATH=/usr/local/Cellar/fftw/3.3.7_1     #macOS  # brew install fftw
-#  INC=-I$(FFTW3_PATH)/include
-#  LIBFFT=-L$(FFTW3_PATH)/lib -lfftw3 -lfftw3f
-#else ifeq ($(FFT),generic)
-#  INC=
-#  LIBFFT=
-#else ifeq ($(FFT),mkl)
-#  SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
-#  LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
-#  INC=-I$(MKLROOT)/include
-#else ifeq ($(FFT),cufft)
-#  #CUFFT_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.1/math_libs                                
-#  INC=-I${NVHPC}/Linux_x86_64/${EBVERSIONNVHPC}/compilers/include
-#endif
+#######FFT settings##########
+ifeq ($(FFT),fftw3)
+  FFTW3_PATH=/opt/local/lib
+  LIBFFT=-L$(FFTW3_PATH) -lfftw3 -lfftw3f
+else ifeq ($(FFT),fftw3_f03)
+  FFTW3_PATH=/usr                                #ubuntu # apt install libfftw3-dev
+  LIBFFT=-L$(FFTW3_PATH)/lib -lfftw3 -lfftw3f
+else ifeq ($(FFT),generic)
+  LIBFFT=
+else ifeq ($(FFT),mkl)
+  LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
+  #INC+=-I$(MKLROOT)/include
+else ifeq ($(FFT),cufft)
+  #CUFFT_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.1/math_libs                                
+  #INC+=-I${NVHPC}/Linux_x86_64/${EBVERSIONNVHPC}/compilers/include
+endif
 
 #######OPTIONS settings###########
 OPT = -I$(SRCDIR) -I$(DECOMPDIR) 
