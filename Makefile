@@ -40,8 +40,8 @@ else ifeq ($(CMP),gcc)
     FFLAGS += -ffpe-trap=invalid,zero -fcheck=all -fimplicit-none
   else
     FFLAGS += -O3 -march=native
-    FFLAGS += -fopenmp -ftree-parallelize-loops=12
-    LFLAGS += -fopenmp
+    #FFLAGS += -fopenmp -ftree-parallelize-loops=12
+    #LFLAGS += -fopenmp
   endif
 else ifeq ($(CMP),nagfor)
   FC = mpinagfor
@@ -59,22 +59,24 @@ else ifeq ($(CMP),nvhpc)
      LFLAGS += -acc -lnvhpcwrapnvtx
   else ifeq ($(PARAMOD),gpu)
      CCXY=80
-     MANAGED=yes
+     MANAGED=no
      ifeq ($(MANAGED),yes)
        GPUOPT=-gpu=cc${CCXY},managed,lineinfo
      else
        GPUOPT=-gpu=cc${CCXY},lineinfo
      endif
      NCCL=no
-     FFLAGS += -D_GPU
-     ifeq ($(NCCL),yes)
-       FFLAGS += -D_NCCL
-     endif
+     #FFLAGS += -D_GPU
+     #ifeq ($(NCCL),yes)
+     #  FFLAGS += -D_NCCL
+     #endif
      FFLAGS += -Mfree -Kieee -Minfo=accel,stdpar ${GPUOPT} -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda
      ifeq ($(NCCL),yes)
-       FFLAGS += -cudalib=cufft,nccl
+       #FFLAGS += -cudalib=cufft,nccl
+       LFLAGS += -cudalib=cufft,nccl
      else
-       FFLAGS += -cudalib=cufft
+       #FFLAGS += -cudalib=cufft
+       LFLAGS += -cudalib=cufft
      endif
      #FFLAGS += -D_GPU -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft
      #FFLAGS += -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft
@@ -101,7 +103,7 @@ DECOMP_INSTALL_DIR ?= $(DECOMP_ROOT)/build/opt
 INC += -I$(DECOMP_INSTALL_DIR)/include
 
 # Users build/link targets
-LFLAGS += -L$(DECOMP_INSTALL_DIR)/lib -ldecomp2d
+LFLAGS += -L$(DECOMP_INSTALL_DIR)/lib64 -ldecomp2d
 
 #######FFT settings##########
 ifeq ($(FFT),fftw3)
@@ -121,7 +123,8 @@ else ifeq ($(FFT),cufft)
 endif
 
 #######OPTIONS settings###########
-OPT = -I$(SRCDIR) -I$(DECOMPDIR) 
+#OPT = -I$(SRCDIR) -I$(DECOMPDIR) -I$(DECOMP_INSTALL_DIR)/include 
+OPT = -I$(SRCDIR) -I$(DECOMP_INSTALL_DIR)/include 
 #LINKOPT = $(FFLAGS) -lnvhpcwrapnvtx
 LINKOPT = $(FFLAGS) $(LFLAGS) 
 #-----------------------------------------------------------------------
