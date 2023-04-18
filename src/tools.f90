@@ -44,9 +44,9 @@ contains
 
     implicit none
 
+    integer, intent(in) :: n1, n2, n3, ntot
     real(mytype),intent(in),dimension(n1,n2,n3) :: err
     real(mytype),intent(out) :: l1, l2, linf
-    integer, intent(in) :: n1, n2, n3, ntot
 
     integer :: i, j, k, code
     real(mytype) :: l1l2(2)

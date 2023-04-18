@@ -80,7 +80,7 @@ else ifeq ($(CMP),nvhpc)
      endif
      #FFLAGS += -D_GPU -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft
      #FFLAGS += -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft
-     LFLAGS += -acc -lnvhpcwrapnvtx
+     LFLAGS += -lnvhpcwrapnvtx
   else
     FFLAGS += -cpp -O3 -march=native
   endif
@@ -103,7 +103,7 @@ DECOMP_INSTALL_DIR ?= $(DECOMP_ROOT)/build/opt
 INC += -I$(DECOMP_INSTALL_DIR)/include
 
 # Users build/link targets
-LFLAGS += -L$(DECOMP_INSTALL_DIR)/lib64 -ldecomp2d
+LIBS = -L$(DECOMP_INSTALL_DIR)/lib64 -L$(DECOMP_INSTALL_DIR)/lib -ldecomp2d
 
 #######FFT settings##########
 ifeq ($(FFT),fftw3)
@@ -126,14 +126,15 @@ endif
 #OPT = -I$(SRCDIR) -I$(DECOMPDIR) -I$(DECOMP_INSTALL_DIR)/include 
 OPT = -I$(SRCDIR) -I$(DECOMP_INSTALL_DIR)/include 
 #LINKOPT = $(FFLAGS) -lnvhpcwrapnvtx
-LINKOPT = $(FFLAGS) $(LFLAGS) 
+LINKOPT = $(FFLAGS)
+LIBS += $(LIBFFT) $(LFLAGS) 
 #-----------------------------------------------------------------------
 # Normally no need to change anything below
 
 all: xcompact3d
 
 xcompact3d : $(OBJDECOMP) $(OBJ)
-	$(FC) -o $@ $(LINKOPT) $(OPT) $(OBJ) $(LIBFFT)
+	$(FC) -o $@ $(LINKOPT) $(OPT) $(OBJ) $(LIBS)
 
 $(OBJ):$(SRCDIR)%.o : $(SRCDIR)%.f90
 	$(FC) $(FFLAGS) $(DEFS) $(INC) -c $<

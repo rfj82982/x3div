@@ -331,7 +331,7 @@ contains
     ! Log
     if (nrank == 0) then
       write(tgv_iounit,'(20e20.12)') (ndt-1)*dt, tke, eps, eps2, enst
-      call flush(tgv_iounit)
+      !call flush(tgv_iounit)
     endif
 
   end subroutine tgv_postprocess
