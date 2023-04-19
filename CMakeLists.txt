@@ -48,7 +48,7 @@ if (NOT CMAKE_BUILD_TYPE)
       FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/compilers" )
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/compilers" "${CMAKE_SOURCE_DIR}/cmake/fft")
 find_package(DECOMP2D REQUIRED)
 
 if (BUILD_TARGET MATCHES "gpu")
@@ -67,7 +67,7 @@ else ()
   set(FFT_Choice "generic" CACHE STRING "FFT for XCompact3d project (generic is the default)")
 endif (BUILD_TARGET MATCHES "gpu")
 set_property(CACHE FFT_Choice PROPERTY STRINGS generic fftw fftw_f03 mkl cufft)
-include(X3D_fft)
+include(fft)
 
 # Create a static library for the fft
 add_subdirectory(src)
