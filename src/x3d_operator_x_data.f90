@@ -4,7 +4,7 @@
 
 module x3d_operator_x_data
 
-   use decomp_2d, only: mytype
+   use decomp_2d_constants, only: mytype
 
    implicit none
 

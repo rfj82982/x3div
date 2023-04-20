@@ -6,8 +6,9 @@ module bc_tgv
 
   use MPI
 
-  use decomp_2d, only : mytype, real_type, decomp_2d_warning
-  use decomp_2d, only : nrank, nproc, xsize, xstart
+  use decomp_2d_constants, only : mytype, real_type
+  use decomp_2d_mpi, only : nrank, nproc, decomp_2d_warning, decomp_2d_abort
+  use decomp_2d, only : xsize, xstart
   use x3d_precision, only : pi, twopi
   use variables, only : nx, ny, nz
   use param, only : dx, dy, dz, xlx, yly, zlz, dt, xnu
@@ -140,7 +141,7 @@ contains
   !
   subroutine tgv_postprocess(ux1, uy1, uz1, ndt)
 
-    use decomp_2d, only : mytype, real_type, decomp_2d_abort, xsize, ysize, zsize
+    use decomp_2d, only : xsize, ysize, zsize
     use param, only : half, two, xnu, dt
     use variables, only : nx, ny, nz, ppy
     use var, only : ux2,ux3
@@ -330,7 +331,7 @@ contains
     ! Log
     if (nrank == 0) then
       write(tgv_iounit,'(20e20.12)') (ndt-1)*dt, tke, eps, eps2, enst
-      call flush(tgv_iounit)
+      !call flush(tgv_iounit)
     endif
 
   end subroutine tgv_postprocess

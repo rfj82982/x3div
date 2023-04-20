@@ -4,7 +4,7 @@
 
 module x3d_staggered
 
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
   use x3d_operator_1d, only : x3doperator1d
   use param
   use thomas

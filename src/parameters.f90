@@ -4,7 +4,9 @@
 
 module parameters
 
-  use decomp_2d, only : mytype, nrank, nproc, decomp_2d_abort
+  use decomp_2d_constants, only : mytype
+  use decomp_2d_mpi, only : decomp_2d_abort
+  use decomp_2d_mpi, only : nrank, nproc
   use param
   use variables
 

@@ -4,7 +4,7 @@
 
 module decomp_2d_poisson
 
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
   use decomp_2d, only : DECOMP_INFO
   use decomp_2d, only : decomp_info_init, &
                         decomp_info_finalize
@@ -56,7 +56,7 @@ module decomp_2d_poisson
 
   abstract interface
      subroutine poisson_xxx(rhs)
-       use decomp_2d, only : mytype
+       use decomp_2d_constants, only : mytype
        real(mytype), dimension(:,:,:), intent(inout) :: rhs
      end subroutine poisson_xxx
   end interface
@@ -72,7 +72,8 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine decomp_2d_poisson_init()
 
-    use decomp_2d, only : nrank, nx_global, ny_global, nz_global
+    use decomp_2d_mpi, only : nrank
+    use decomp_2d, only : nx_global, ny_global, nz_global
 
     implicit none
 
@@ -280,8 +281,8 @@ contains
     use x3d_operator_y_data
     use x3d_operator_z_data
     use decomp_2d, only : nx_global, ny_global, nz_global
-    use decomp_2d_fft, only : PHYSICAL_IN_Z
-    use nvtx
+    use decomp_2d_constants, only : PHYSICAL_IN_Z
+    !use nvtx
 
     ! right-hand-side of Poisson as input
     ! solution of Poisson as output
@@ -322,9 +323,9 @@ contains
     
     !$acc data create(cw1) present(kxyz,az,bz,ay,by,ax,bx,rhs)
     ! compute r2c transform 
-    call nvtxStartRange("call decomp_fft_r2c")
+    !call nvtxStartRange("call decomp_fft_r2c")
     call decomp_2d_fft_3d(rhs,cw1)
-    call nvtxEndRange
+    !call nvtxEndRange
     !do k = sp%xst(3), sp%xen(3)
     !   do j = sp%xst(2), sp%xen(2)
     !      do i = sp%xst(1), sp%xen(1)
@@ -335,7 +336,7 @@ contains
     !   end do
     !end do
 
-    call nvtxStartRange("call normalisation")
+    !call nvtxStartRange("call normalisation")
     !$acc kernels default(present)
     do concurrent(k=sp_xst3:sp_xen3, j=sp_xst2:sp_xen2,i=sp_xst1:sp_xen1)
       ! POST PROCESSING IN Z
@@ -396,7 +397,7 @@ contains
 
     end do
     !$acc end kernels
-    call nvtxEndRange
+    !call nvtxEndRange
 #ifdef DEBUG
     dim3d = shape(cw1)
     do k = 1, dim3d(3)!,dim3d(3)/2+1
@@ -409,9 +410,9 @@ contains
     enddo
 #endif
     ! compute c2r transform
-    call nvtxStartRange("call decomp_c2r")
+    !call nvtxStartRange("call decomp_c2r")
     call decomp_2d_fft_3d(cw1,rhs)
-    call nvtxEndRange
+    !call nvtxEndRange
     !$acc end data
 
     !   call decomp_2d_fft_finalize
@@ -423,7 +424,7 @@ contains
   subroutine poisson_100(rhs)
 
     use decomp_2d, only : nx_global, ny_global, nz_global
-    use decomp_2d_fft, only : PHYSICAL_IN_Z
+    use decomp_2d_constants, only : PHYSICAL_IN_Z
     
     implicit none
 
@@ -766,21 +767,21 @@ contains
 
     interface
        pure function cx(realpart,imaginarypart)
-          use decomp_2d, only : mytype
+          use decomp_2d_constants, only : mytype
           implicit none
           !$acc routine seq
           complex(mytype) :: cx
           real(mytype), intent(in) :: realpart, imaginarypart
        end function cx
        pure function rl(complexnumber)
-          use decomp_2d, only : mytype
+          use decomp_2d_constants, only : mytype
           implicit none
           !$acc routine seq
           complex(mytype), intent(in) :: complexnumber
           real(mytype) :: rl
        end function rl
        pure function iy(complexnumber)
-          use decomp_2d, only : mytype
+          use decomp_2d_constants, only : mytype
           implicit none
           !$acc routine seq
           complex(mytype), intent(in) :: complexnumber

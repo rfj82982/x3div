@@ -4,7 +4,8 @@
 
 module x3d_transpose
 
-  use decomp_2d, only : mytype, decomp_info, decomp_main
+  use decomp_2d_constants, only : mytype
+  use decomp_2d, only : decomp_info, decomp_main
   use variables, only : p_row, p_col
 
   implicit none
@@ -73,15 +74,7 @@ contains
     n2 = decomp%xsz(2)
     n3 = decomp%xsz(3)
 
-    !if (p_row == 1) then
-    !  !$acc kernels default(present)
-    !  do concurrent (k=1:n3, j=1:n2, i=1:n1)
-    !    data_out(i,j,k) = data_in(i,j,k)
-    !  enddo
-    !  !$acc end kernels
-    !else 
-      call transpose_x_to_y(data_in,data_out,decomp)
-    !endif
+    call transpose_x_to_y(data_in,data_out,decomp)
 
   end subroutine x3d_transpose_x_to_y_real
   !############################################################################
@@ -104,15 +97,7 @@ contains
     n2 = decomp%xsz(2)
     n3 = decomp%xsz(3)
 
-    if (p_row == 1) then
-      !$acc kernels default(present)
-      do concurrent (k=1:n3, j=1:n2, i=1:n1)
-        data_out(i,j,k) = data_in(i,j,k)
-      enddo
-      !$acc end kernels
-    else 
-      call transpose_x_to_y(data_in,data_out,decomp)
-    endif
+    call transpose_x_to_y(data_in,data_out,decomp)
 
   end subroutine x3d_transpose_x_to_y_cplx
 
@@ -142,15 +127,7 @@ contains
     n2 = decomp%ysz(2)
     n3 = decomp%ysz(3)
 
-    !if (p_col == 1) then
-    !  !$acc kernels default(present)
-    !  do concurrent (k=1:n3, j=1:n2, i=1:n1)
-    !    data_out(i,j,k) = data_in(i,j,k)
-    !  enddo
-    !  !$acc end kernels
-    !else 
-      call transpose_y_to_z(data_in,data_out,decomp)
-    !endif
+    call transpose_y_to_z(data_in,data_out,decomp)
 
   end subroutine x3d_transpose_y_to_z_real
   !############################################################################
@@ -173,15 +150,7 @@ contains
     n2 = decomp%ysz(2)
     n3 = decomp%ysz(3)
 
-    !if (p_col == 1) then
-    !  !$acc kernels default(present)
-    !  do concurrent (k=1:n3, j=1:n2, i=1:n1)
-    !    data_out(i,j,k) = data_in(i,j,k)
-    !  enddo
-    !  !$acc end kernels
-    !else 
-      call transpose_y_to_z(data_in,data_out,decomp)
-    !endif
+    call transpose_y_to_z(data_in,data_out,decomp)
 
   end subroutine x3d_transpose_y_to_z_cplx
 
@@ -211,15 +180,7 @@ contains
     n2 = decomp%zsz(2)
     n3 = decomp%zsz(3)
 
-    !if (p_col == 1) then
-    !  !$acc kernels default(present)
-    !  do concurrent (k=1:n3, j=1:n2, i=1:n1)
-    !    data_out(i,j,k) = data_in(i,j,k)
-    !  enddo
-    !  !$acc end kernels
-    !else 
-      call transpose_z_to_y(data_in,data_out,decomp)
-    !endif
+    call transpose_z_to_y(data_in,data_out,decomp)
 
   end subroutine x3d_transpose_z_to_y_real
   !############################################################################
@@ -242,15 +203,7 @@ contains
     n2 = decomp%zsz(2)
     n3 = decomp%zsz(3)
 
-    !if (p_col == 1) then
-    !  !$acc kernels default(present)
-    !  do concurrent (k=1:n3, j=1:n2, i=1:n1)
-    !    data_out(i,j,k) = data_in(i,j,k)
-    !  enddo
-    !  !$acc end kernels
-    !else 
-      call transpose_z_to_y(data_in,data_out,decomp)
-    !endif
+    call transpose_z_to_y(data_in,data_out,decomp)
 
   end subroutine x3d_transpose_z_to_y_cplx
 
@@ -280,15 +233,7 @@ contains
     n2 = decomp%zsz(2)
     n3 = decomp%zsz(3)
 
-    !if (p_row == 1) then
-    !  !$acc kernels default(present)
-    !  do concurrent (k=1:n3, j=1:n2, i=1:n1)
-    !    data_out(i,j,k) = data_in(i,j,k)
-    !  enddo
-    !  !$acc end kernels
-    !else 
-      call transpose_y_to_x(data_in,data_out,decomp)
-    !endif
+    call transpose_y_to_x(data_in,data_out,decomp)
 
   end subroutine x3d_transpose_y_to_x_real
   !############################################################################
@@ -311,15 +256,7 @@ contains
     n2 = decomp%ysz(2)
     n3 = decomp%ysz(3)
 
-    !if (p_row == 1) then
-    !  !$acc kernels default(present)
-    !  do concurrent (k=1:n3, j=1:n2, i=1:n1)
-    !    data_out(i,j,k) = data_in(i,j,k)
-    !  enddo
-    !  !$acc end kernels
-    !else 
-      call transpose_y_to_x(data_in,data_out,decomp)
-    !endif
+    call transpose_y_to_x(data_in,data_out,decomp)
 
   end subroutine x3d_transpose_y_to_x_cplx
 

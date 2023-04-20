@@ -4,7 +4,7 @@
 
 module var
 
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
 
   implicit none
 
@@ -40,10 +40,10 @@ contains
 
     use variables
     use param
-    use decomp_2d, only : DECOMP_INFO
+    use decomp_2d , only : DECOMP_INFO
     use decomp_2d , only : alloc_x, alloc_y, alloc_z
     use decomp_2d , only : xsize, ysize, zsize, ph1, ph3
-    use decomp_2d , only : nrank
+    use decomp_2d_mpi , only : nrank
 
     implicit none
 

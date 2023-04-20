@@ -4,6 +4,8 @@
 
 module transeq
 
+  use decomp_2d_constants, only : mytype
+  
   private
   public :: calculate_transeq_rhs
 
@@ -15,7 +17,6 @@ contains
   !############################################################################
   subroutine calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
 
-    use decomp_2d, only : mytype
     use decomp_2d, only : xsize, zsize
     use param, only : ntime
 
@@ -45,7 +46,6 @@ contains
     use param
     use variables
     use x3d_operator_1d
-    use decomp_2d, only : mytype
     use x3d_transpose
     use x3d_derive
     use decomp_2d , only : xsize, ysize, zsize
@@ -53,7 +53,7 @@ contains
     use var, only : ux2,uy2,uz2,ta2,tb2,tc2,td2,te2,tf2,tg2,th2,ti2
     use var, only : ux3,uy3,uz3,ta3,tb3,tc3,td3,te3,tf3,tg3,th3,ti3
     use case, only : case_forcing
-    use nvtx 
+    !use nvtx 
 
     implicit none
 
@@ -81,17 +81,17 @@ contains
     !$acc data create(ux2,uy2,uz2,ux3,uy3,uz3) present(ux1,uy1,uz1,dux1,duy1,duz1)
     !$acc enter data create(ta1,td1,ta2,td2,tg2,ta3,td3,tg3)
     ! Transpose the velocity in all 3 system of refence
-    call nvtxStartRange("Tran XY")
+    !call nvtxStartRange("Tran XY")
     call x3d_transpose_x_to_y(ux1,ux2)
     call x3d_transpose_x_to_y(uy1,uy2)
     call x3d_transpose_x_to_y(uz1,uz2)
-    call nvtxEndRange
+    !call nvtxEndRange
     
-    call nvtxStartRange("Tran YZ")
+    !call nvtxStartRange("Tran YZ")
     call x3d_transpose_y_to_z(ux2,ux3)
     call x3d_transpose_y_to_z(uy2,uy3)
     call x3d_transpose_y_to_z(uz2,uz3)
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Compute dux
     !SKEW SYMMETRIC FORM
@@ -102,10 +102,10 @@ contains
     enddo
     !$acc end kernels
 
-    call nvtxStartRange("Group Der X")
+    !call nvtxStartRange("Group Der X")
     call derx (td1,ta1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
     call derx (ta1,ux1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Convective terms of x-pencil are stored directly in dux-y-z1
     !$acc kernels default(present)
@@ -117,7 +117,7 @@ contains
     ! If needed, compute and add diffusion
     if (xnu /= 0) then
 
-      call nvtxStartRange("Der XX")
+      !call nvtxStartRange("Der XX")
       ! Compute diffusion in td1, te1, tf1
       call derxx(td1,ux1,x3d_op_derxx ,xsize(1),xsize(2),xsize(3))
 
@@ -127,7 +127,7 @@ contains
         dux1(i,j,k,1) = dux1(i,j,k,1) + xnu*td1(i,j,k)
       enddo
       !$acc end kernels
-      call nvtxEndRange
+      !call nvtxEndRange
     endif
     
     !WORK Y-PENCILS
@@ -137,10 +137,10 @@ contains
     enddo
     !$acc end kernels
 
-    call nvtxStartRange("Group Der Y")
+    !call nvtxStartRange("Group Der Y")
     call dery (tg2,td2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
     call dery (td2,ux2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Convective terms of y-pencil in tg2,th2,ti2
     !$acc kernels default(present)
@@ -161,9 +161,9 @@ contains
     ! If needed, compute and add diffusion
     if (xnu /= 0) then
       !$acc wait
-      call nvtxStartRange("Der YY")
+      !call nvtxStartRange("Der YY")
       ! Compute diffusion in ta2, tb2 and tc2
-      call deryy(ta2,ux2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
+      !call deryy(ta2,ux2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
 
       ! Add convective and diffusive terms of y-pencil
       if (istret /= 0) then
@@ -180,7 +180,7 @@ contains
         enddo
         !$acc end kernels
       endif
-      call nvtxEndRange
+      !call nvtxEndRange
     endif
     
     !WORK Z-PENCILS
@@ -190,10 +190,10 @@ contains
     enddo
     !$acc end kernels
 
-    call nvtxStartRange("Group Der Z")
+    !call nvtxStartRange("Group Der Z")
     call derz (tg3,td3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
     call derz (td3,ux3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
     !$acc kernels default(present)
@@ -205,7 +205,7 @@ contains
     ! If needed, compute and add diffusion
     if (xnu /= zero) then
 
-      call nvtxStartRange("Der ZZ")
+      !call nvtxStartRange("Der ZZ")
       ! Compute diffusion in td3, te3, tf3
       call derzz(td3,ux3,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
 
@@ -215,14 +215,14 @@ contains
          ta3(i,j,k) = ta3(i,j,k) + xnu*td3(i,j,k)
       enddo
       !$acc end kernels
-      call nvtxEndRange
+      !call nvtxEndRange
 
     endif
 
     ! Send z-rhs (ta3,tb3,tc3) to y-pencil (td2,te2,tf2)
-    call nvtxStartRange("Tran ZY")
+    !call nvtxStartRange("Tran ZY")
     call x3d_transpose_z_to_y(ta3,td2)
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Combine y-rhs with z-rhs
     !$acc kernels default(present)
@@ -232,9 +232,9 @@ contains
     !$acc end kernels
 
     !WORK X-PENCILS
-    call nvtxStartRange("Tran YX")
+    !call nvtxStartRange("Tran YX")
     call x3d_transpose_y_to_x(tg2,ta1)
-    call nvtxEndRange
+    !call nvtxEndRange
 
     !FINAL SUM: DIFF TERMS + CONV TERMS
     !$acc kernels default(present)
@@ -254,10 +254,10 @@ contains
     enddo
     !$acc end kernels
 
-    call nvtxStartRange("Group Der X")
+    !call nvtxStartRange("Group Der X")
     call derx (te1,tb1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
     call derx (tb1,uy1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Convective terms of x-pencil are stored directly in dux-y-z1
     !$acc kernels default(present)
@@ -269,7 +269,7 @@ contains
     ! If needed, compute and add diffusion
     if (xnu /= 0) then
 
-      call nvtxStartRange("Der XX")
+      !call nvtxStartRange("Der XX")
       ! Compute diffusion in td1, te1, tf1
       call derxx(te1,uy1,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
 
@@ -279,7 +279,7 @@ contains
         duy1(i,j,k,1) = duy1(i,j,k,1) + xnu*te1(i,j,k)
       enddo
       !$acc end kernels
-      call nvtxEndRange
+      !call nvtxEndRange
     endif
     
     !WORK Y-PENCILS
@@ -289,10 +289,10 @@ contains
     enddo
     !$acc end kernels
 
-    call nvtxStartRange("Group Der Y")
+    !call nvtxStartRange("Group Der Y")
     call dery (th2,te2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
     call dery (te2,uy2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Convective terms of y-pencil in tg2,th2,ti2
     !$acc kernels default(present)
@@ -313,7 +313,7 @@ contains
     ! If needed, compute and add diffusion
     if (xnu /= 0) then
       !$acc wait
-      call nvtxStartRange("Der YY")
+      !call nvtxStartRange("Der YY")
       ! Compute diffusion in ta2, tb2 and tc2
       call deryy(tb2,uy2,x3d_op_deryy ,ysize(1),ysize(2),ysize(3))
 
@@ -332,7 +332,7 @@ contains
         enddo
         !$acc end kernels
       endif
-      call nvtxEndRange
+      !call nvtxEndRange
     endif
     
     !WORK Z-PENCILS
@@ -342,10 +342,10 @@ contains
     enddo
     !$acc end kernels
 
-    call nvtxStartRange("Group Der Z")
+    !call nvtxStartRange("Group Der Z")
     call derz (th3,te3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
     call derz (te3,uy3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
     !$acc kernels default(present)
@@ -357,7 +357,7 @@ contains
     ! If needed, compute and add diffusion
     if (xnu /= zero) then
 
-      call nvtxStartRange("Der ZZ")
+      !call nvtxStartRange("Der ZZ")
       ! Compute diffusion in td3, te3, tf3
       call derzz(te3,uy3,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
 
@@ -367,14 +367,14 @@ contains
          tb3(i,j,k) = tb3(i,j,k) + xnu*te3(i,j,k)
       enddo
       !$acc end kernels
-      call nvtxEndRange
+      !call nvtxEndRange
 
     endif
 
     ! Send z-rhs (ta3,tb3,tc3) to y-pencil (td2,te2,tf2)
-    call nvtxStartRange("Tran ZY")
+    !call nvtxStartRange("Tran ZY")
     call x3d_transpose_z_to_y(tb3,te2)
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Combine y-rhs with z-rhs
     !$acc kernels default(present)
@@ -384,9 +384,9 @@ contains
     !$acc end kernels
 
     !WORK X-PENCILS
-    call nvtxStartRange("Tran YX")
+    !call nvtxStartRange("Tran YX")
     call x3d_transpose_y_to_x(th2,tb1)
-    call nvtxEndRange
+    !call nvtxEndRange
 
     !FINAL SUM: DIFF TERMS + CONV TERMS
     !$acc kernels default(present)
@@ -406,10 +406,10 @@ contains
     enddo
     !$acc end kernels
 
-    call nvtxStartRange("Group Der X")
+    !call nvtxStartRange("Group Der X")
     call derx (tf1,tc1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
     call derx (tc1,uz1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Convective terms of x-pencil are stored directly in dux-y-z1
     !$acc kernels default(present)
@@ -421,7 +421,7 @@ contains
     ! If needed, compute and add diffusion
     if (xnu /= 0) then
 
-      call nvtxStartRange("Der XX")
+      !call nvtxStartRange("Der XX")
       ! Compute diffusion in td1, te1, tf1
       call derxx(tf1,uz1,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
 
@@ -431,7 +431,7 @@ contains
         duz1(i,j,k,1) = duz1(i,j,k,1) + xnu*tf1(i,j,k)
       enddo
       !$acc end kernels
-      call nvtxEndRange
+      !call nvtxEndRange
     endif
     
     !WORK Y-PENCILS
@@ -441,10 +441,10 @@ contains
     enddo
     !$acc end kernels
 
-    call nvtxStartRange("Group Der Y")
+    !call nvtxStartRange("Group Der Y")
     call dery (ti2,tf2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
     call dery (tf2,uz2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Convective terms of y-pencil in tg2,th2,ti2
     !$acc kernels default(present)
@@ -465,7 +465,7 @@ contains
     ! If needed, compute and add diffusion
     if (xnu /= 0) then
       !$acc wait
-      call nvtxStartRange("Der YY")
+      !call nvtxStartRange("Der YY")
       ! Compute diffusion in ta2, tb2 and tc2
       call deryy(tc2,uz2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
 
@@ -484,7 +484,7 @@ contains
         enddo
         !$acc end kernels
       endif
-      call nvtxEndRange
+      !call nvtxEndRange
     endif
     
     !WORK Z-PENCILS
@@ -494,10 +494,10 @@ contains
     enddo
     !$acc end kernels
 
-    call nvtxStartRange("Group Der Z")
+    !call nvtxStartRange("Group Der Z")
     call derz (ti3,tf3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
     call derz (tf3,uz3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
     !$acc kernels default(present)
@@ -509,7 +509,7 @@ contains
     ! If needed, compute and add diffusion
     if (xnu /= zero) then
 
-      call nvtxStartRange("Der ZZ")
+      !call nvtxStartRange("Der ZZ")
       ! Compute diffusion in td3, te3, tf3
       call derzz(tf3,uz3,x3d_op_derzz ,zsize(1),zsize(2),zsize(3))
 
@@ -519,14 +519,14 @@ contains
          tc3(i,j,k) = tc3(i,j,k) + xnu*tf3(i,j,k)
       enddo
       !$acc end kernels
-      call nvtxEndRange
+      !call nvtxEndRange
 
     endif
 
     ! Send z-rhs (ta3,tb3,tc3) to y-pencil (td2,te2,tf2)
-    call nvtxStartRange("Tran ZY")
+    !call nvtxStartRange("Tran ZY")
     call x3d_transpose_z_to_y(tc3,tf2)
-    call nvtxEndRange
+    !call nvtxEndRange
 
     ! Combine y-rhs with z-rhs
     !$acc kernels default(present)
@@ -536,9 +536,9 @@ contains
     !$acc end kernels
 
     !WORK X-PENCILS
-    call nvtxStartRange("Tran YX")
+    !call nvtxStartRange("Tran YX")
     call x3d_transpose_y_to_x(ti2,tc1) !diff+conv. terms
-    call nvtxEndRange
+    !call nvtxEndRange
 
     !FINAL SUM: DIFF TERMS + CONV TERMS
     !$acc kernels default(present)

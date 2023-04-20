@@ -7,7 +7,9 @@ program xcompact3d
   use MPI
 
   use var
-  use decomp_2d, only : nrank, xsize, real_type, decomp_2d_warning 
+  use decomp_2d_constants, only : real_type 
+  use decomp_2d_mpi, only : nrank, decomp_2d_warning 
+  use decomp_2d, only : xsize 
   use param,   only : dt, zero, itr
   use param,   only : gdt
   use transeq, only : calculate_transeq_rhs
@@ -15,7 +17,7 @@ program xcompact3d
   use decomp_2d_poisson, only : ax, bx, ay, by, az, bz, kxyz
   use case
   use time_integrators, only : int_time
-  use nvtx
+  !use nvtx
   use x3d_operator_1d
   use variables
 
@@ -29,9 +31,9 @@ program xcompact3d
 
   call boot_xcompact3d()
 
-  call nvtxStartRange("init_xcompact3d")
+  !call nvtxStartRange("init_xcompact3d")
   call init_xcompact3d(ndt_max)
-  call nvtxEndRange
+  !call nvtxEndRange
 
   telapsed = 0
   tmin = telapsed
@@ -83,24 +85,24 @@ program xcompact3d
      !call init_flowfield()
 
      tstart = MPI_Wtime()
-     call nvtxStartRange("calculate_transeq_rhs")
+     !call nvtxStartRange("calculate_transeq_rhs")
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
-     call nvtxEndRange
+     !call nvtxEndRange
 
-     call nvtxStartRange("int_time")
+     !call nvtxStartRange("int_time")
      call int_time(ux1,uy1,uz1,dux1,duy1,duz1)
-     call nvtxEndRange
+     !call nvtxEndRange
      !!
      !!!do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
      !!!  divu3(:,:,:) = zero
      !!!enddo
-     call nvtxStartRange("solve_poisson")
+     !call nvtxStartRange("solve_poisson")
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
-     call nvtxEndRange
+     !call nvtxEndRange
      !!
-     call nvtxStartRange("cor_vel")
+     !call nvtxStartRange("cor_vel")
      call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
-     call nvtxEndRange
+     !call nvtxEndRange
 
      tend = MPI_Wtime()
      telapsed = telapsed + (tend - tstart)
@@ -117,7 +119,7 @@ program xcompact3d
 
      ndt = ndt + 1
      !call nvtxStartRange("case_postprocess")
-     !call case_postprocess(ux1, uy1, uz1, ndt)
+     call case_postprocess(ux1, uy1, uz1, ndt)
      !call nvtxEndRange
 
   end do
