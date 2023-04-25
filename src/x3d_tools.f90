@@ -155,7 +155,7 @@ subroutine init_xcompact3d(ndt_max)
         print *, "  3) nz (default=16)"
         print *, "  4) p_row (default=0)"
         print *, "  5) p_col (default=0)"
-        print *, "  6) ndt_max (default=10)"
+        print *, "  6) ndt_max (default=5)"
         print *, "  7) test_mode logical 0/1 (default=0)"
      endif
   enddo

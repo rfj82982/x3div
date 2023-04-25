@@ -150,7 +150,7 @@ subroutine listing()
   if (nrank==0) then
      write(*,*) '==========================================================='
      write(*,*) '======================Xcompact3D==========================='
-     write(*,*) '===Copyright (c) 2022 Éric Lamballais and Sylvain Laizet==='
+     write(*,*) '===Copyright (c) 2023 The XCompact3d development Team======'
      write(*,*) '==========================================================='
 #if defined(VERSION)
      write(*,*)'Git version        : ', VERSION
