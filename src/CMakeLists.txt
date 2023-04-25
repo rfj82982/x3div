@@ -28,37 +28,18 @@ set(X3DFILES
     x3d_staggered.f90
     x3d_tools.f90
     x3d_transpose.f90)
-add_library(x3d STATIC ${X3DFILES})
-#target_include_directories(x3d PRIVATE ${2decomp_INCLUDE_DIR})
-#target_link_libraries(x3d PRIVATE decomp2d)
 
+add_library(x3d STATIC ${X3DFILES})
 add_executable(xcompact3d xcompact3d.f90)
-target_include_directories(xcompact3d PRIVATE ${2decomp_INCLUDE_DIR})
-target_link_libraries(x3d PRIVATE ${DECOMP2D_FFT_LIB})
-target_link_libraries(xcompact3d PRIVATE x3d)
-target_link_libraries(xcompact3d PRIVATE ${DECOMP2D_FFT_LIB})
+
+target_link_libraries(x3d PRIVATE decomp2d)
+target_link_libraries(xcompact3d PRIVATE decomp2d x3d)
 
 if (MPI_FOUND)
   target_link_libraries(x3d PRIVATE MPI::MPI_Fortran)
   target_link_libraries(xcompact3d PRIVATE MPI::MPI_Fortran)
 endif (MPI_FOUND)
 
-if (FFTW_FOUND)
-  message(STATUS "Link against FFTW Libs")
-  if (FFTW_DOUBLE_LIB_FOUND)
-    message(STATUS "FFTW DOUBLE ${FFTW_DOUBLE_LIB}")
-    target_link_libraries(x3d PRIVATE ${FFTW_DOUBLE_LIB})
-    target_link_libraries(xcompact3d PRIVATE ${FFTW_DOUBLE_LIB})
-  endif (FFTW_DOUBLE_LIB_FOUND)
-  if (FFTW_FLOAT_LIB_FOUND)
-    message(STATUS "FFTW FLOAT ${FFTW_FLOAT_LIB}")
-    target_link_libraries(x3d PRIVATE ${FFTW_FLOAT_LIB})
-    target_link_libraries(xcompact3d PRIVATE ${FFTW_FLOAT_LIB})
-  endif (FFTW_FLOAT_LIB_FOUND)
-elseif (MKL_FOUND)
-  target_link_libraries(x3d PUBLIC $<LINK_ONLY:MKL::MKL>)
-  target_link_libraries(xcompact3d PUBLIC $<LINK_ONLY:MKL::MKL>)
-endif (FFTW_FOUND)
 
 install(TARGETS xcompact3d x3d
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
