@@ -110,7 +110,7 @@ contains
     ! Convective terms of x-pencil are stored directly in dux-y-z1
     !$acc kernels default(present)
     do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
-      dux1(i,j,k,1) = -half*td1(i,j,k) + ux1(i,j,k) * ta1(i,j,k) !duudx+u*dudx
+      dux1(i,j,k,1) = -half*(td1(i,j,k) + ux1(i,j,k) * ta1(i,j,k)) !duudx+u*dudx
     enddo
     !$acc end kernels
 
@@ -145,7 +145,7 @@ contains
     ! Convective terms of y-pencil in tg2,th2,ti2
     !$acc kernels default(present)
     do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
-      tg2(i,j,k) = -half*tg2(i,j,k) + uy2(i,j,k) * td2(i,j,k)
+      tg2(i,j,k) = -half*(tg2(i,j,k) + uy2(i,j,k) * td2(i,j,k))
     enddo
     !$acc end kernels
     
@@ -198,7 +198,7 @@ contains
     ! Convective terms of z-pencil in ta3,tb3,tc3
     !$acc kernels default(present)
     do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
-      ta3(i,j,k) = -half*tg3(i,j,k) + uz3(i,j,k) * td3(i,j,k)
+      ta3(i,j,k) = -half*(tg3(i,j,k) + uz3(i,j,k) * td3(i,j,k))
     enddo 
     !$acc end kernels
 
@@ -262,7 +262,7 @@ contains
     ! Convective terms of x-pencil are stored directly in dux-y-z1
     !$acc kernels default(present)
     do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
-      duy1(i,j,k,1) = -half*te1(i,j,k) + ux1(i,j,k) * tb1(i,j,k)
+      duy1(i,j,k,1) = -half*(te1(i,j,k) + ux1(i,j,k) * tb1(i,j,k))
     enddo
     !$acc end kernels
 
@@ -297,7 +297,7 @@ contains
     ! Convective terms of y-pencil in tg2,th2,ti2
     !$acc kernels default(present)
     do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
-      th2(i,j,k) = -half*th2(i,j,k) + uy2(i,j,k) * te2(i,j,k)
+      th2(i,j,k) = -half*(th2(i,j,k) + uy2(i,j,k) * te2(i,j,k))
     enddo
     !$acc end kernels
     
@@ -350,7 +350,7 @@ contains
     ! Convective terms of z-pencil in ta3,tb3,tc3
     !$acc kernels default(present)
     do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
-      tb3(i,j,k) = -half*th3(i,j,k) + uz3(i,j,k) * te3(i,j,k)
+      tb3(i,j,k) = -half*(th3(i,j,k) + uz3(i,j,k) * te3(i,j,k))
     enddo 
     !$acc end kernels
 
@@ -414,7 +414,7 @@ contains
     ! Convective terms of x-pencil are stored directly in dux-y-z1
     !$acc kernels default(present)
     do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
-      duz1(i,j,k,1) = -half*tf1(i,j,k) + ux1(i,j,k) * tc1(i,j,k)
+      duz1(i,j,k,1) = -half*(tf1(i,j,k) + ux1(i,j,k) * tc1(i,j,k))
     enddo
     !$acc end kernels
 
@@ -449,7 +449,7 @@ contains
     ! Convective terms of y-pencil in tg2,th2,ti2
     !$acc kernels default(present)
     do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
-      ti2(i,j,k) = -half*ti2(i,j,k) + uy2(i,j,k) * tf2(i,j,k)
+      ti2(i,j,k) = -half*(ti2(i,j,k) + uy2(i,j,k) * tf2(i,j,k))
     enddo
     !$acc end kernels
     
@@ -502,7 +502,7 @@ contains
     ! Convective terms of z-pencil in ta3,tb3,tc3
     !$acc kernels default(present)
     do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
-      tc3(i,j,k) = -half*ti3(i,j,k) + uz3(i,j,k) * tf3(i,j,k)
+      tc3(i,j,k) = -half*(ti3(i,j,k) + uz3(i,j,k) * tf3(i,j,k))
     enddo 
     !$acc end kernels
 

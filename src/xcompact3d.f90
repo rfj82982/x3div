@@ -26,6 +26,7 @@ program xcompact3d
   double precision :: tstart, tend, telapsed, tmin, tmax
   !real :: trun
   integer :: i, j, k
+  integer :: xsz1, xsz2, xsz3
   integer :: ndt, ndt_max
   integer :: code
 
@@ -39,6 +40,10 @@ program xcompact3d
   tmin = telapsed
 
   ndt = 1
+  
+  xsz1=xsize(1)
+  xsz2=xsize(2)
+  xsz3=xsize(3)
 
   !$acc data copyin(gdt) async 
   !$acc data copyin(x3d_op_derx%f,x3d_op_derx%s,x3d_op_derx%w,x3d_op_derx%periodic) async 
@@ -87,6 +92,11 @@ program xcompact3d
      tstart = MPI_Wtime()
      !call nvtxStartRange("calculate_transeq_rhs")
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
+     !write(*,*) 'Resu RHS' 
+     !do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
+     !  write(*,*) dux1(i,j,k,1),duy1(i,j,k,1),duz1(i,j,k,1)
+     !enddo
+     !write(*,*) 'END RHS' 
      !call nvtxEndRange
 
      !call nvtxStartRange("int_time")
