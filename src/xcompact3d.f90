@@ -92,15 +92,30 @@ program xcompact3d
      tstart = MPI_Wtime()
      !call nvtxStartRange("calculate_transeq_rhs")
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
-     !write(*,*) 'Resu RHS' 
+     !write(*,*) 'Resu RHS dux1' 
      !do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
-     !  write(*,*) dux1(i,j,k,1),duy1(i,j,k,1),duz1(i,j,k,1)
+     !  write(*,*) dux1(i,j,k,1)
      !enddo
-     !write(*,*) 'END RHS' 
+     !write(*,*) 'END RHS dux1' 
+     !write(*,*) 'Resu RHS udy1' 
+     !do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
+     !  write(*,*) duy1(i,j,k,1)
+     !enddo
+     !write(*,*) 'END RHS duy1' 
+     !write(*,*) 'Resu RHS duz1' 
+     !do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
+     !  write(*,*) duz1(i,j,k,1)
+     !enddo
+     !write(*,*) 'END RHS duz1' 
      !call nvtxEndRange
 
      !call nvtxStartRange("int_time")
      call int_time(ux1,uy1,uz1,dux1,duy1,duz1)
+     !write(*,*) 'INT TIME '
+     !do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
+     !  write(*,*) ux1(i,j,k),uy1(i,j,k),uz1(i,j,k)
+     !enddo
+     !write(*,*) 'END INT TIME'
      !call nvtxEndRange
      !!
      !!!do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
@@ -108,10 +123,20 @@ program xcompact3d
      !!!enddo
      !call nvtxStartRange("solve_poisson")
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
+     !write(*,*) 'POISSON '
+     !do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
+     !  write(*,*) px1(i,j,k),py1(i,j,k),pz1(i,j,k)
+     !enddo
+     !write(*,*) 'END POISSON'
      !call nvtxEndRange
      !!
      !call nvtxStartRange("cor_vel")
      call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
+     !write(*,*) 'CORRECTION '
+     !do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
+     !  write(*,*) ux1(i,j,k),uy1(i,j,k),uz1(i,j,k)
+     !enddo
+     !write(*,*) 'END CORRECTION'
      !call nvtxEndRange
 
      tend = MPI_Wtime()

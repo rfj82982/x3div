@@ -163,7 +163,7 @@ contains
       !$acc wait
       !call nvtxStartRange("Der YY")
       ! Compute diffusion in ta2, tb2 and tc2
-      !call deryy(ta2,ux2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
+      call deryy(ta2,ux2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
 
       ! Add convective and diffusive terms of y-pencil
       if (istret /= 0) then

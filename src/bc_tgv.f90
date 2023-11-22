@@ -58,7 +58,7 @@ contains
 
     ! Default time step : CFL = 0.2 and U = 1
     ! This should be inside input.i3d ?
-    dt = 0.1_mytype * dx
+    dt = 0.5_mytype * dx ! use 0.0025 for 128
 
     ! Default Re is 1600 when Re = 0
     ! This should be inside input.i3d ?
@@ -168,7 +168,7 @@ contains
     n3 = xsize(3)
 
     ! Collect statistics at each time step currently
-    if (mod(ndt, 1) /= 0) return
+    if (mod(ndt, 10) /= 0) return
 
     ! This is needed to compute derivatives
     !$acc data create(ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,ux2,ta2,ux3,ta3) present(ux1,uy1,uz1)
