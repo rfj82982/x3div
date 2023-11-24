@@ -58,7 +58,7 @@ contains
 
     ! Default time step : CFL = 0.2 and U = 1
     ! This should be inside input.i3d ?
-    dt = 0.5_mytype * dx ! use 0.0025 for 128
+    dt = 0.05_mytype * dx ! use 0.0025 for 128
 
     ! Default Re is 1600 when Re = 0
     ! This should be inside input.i3d ?
