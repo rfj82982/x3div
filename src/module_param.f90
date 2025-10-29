@@ -6,6 +6,7 @@ module variables
   !USE param
   !USE var
   use decomp_2d_constants, only : mytype
+  use decomp_2d, only : DECOMP_INFO
 
   ! Boundary conditions : ncl = 2 --> Dirichlet
   ! Boundary conditions : ncl = 1 --> Free-slip
@@ -40,6 +41,8 @@ module variables
   integer,parameter :: prec = 8
 #endif
 #endif
+
+  TYPE(DECOMP_INFO), save :: phG, ph1, ph2, ph3, ph4
 
   !module filter
   real(mytype),dimension(200) :: idata

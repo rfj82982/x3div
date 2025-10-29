@@ -84,7 +84,6 @@ subroutine init_xcompact3d(ndt_max)
   use decomp_2d, only : init_coarser_mesh_statS, &
                         init_coarser_mesh_statV, &
                         init_coarser_mesh_statP
-  use decomp_2d, only : ph1, ph2, ph3, phG
   USE decomp_2d_poisson, ONLY : decomp_2d_poisson_init
   use x3d_operator_x_data, only : x3d_operator_x_data_init
   use x3d_operator_y_data, only : x3d_operator_y_data_init
@@ -100,6 +99,8 @@ subroutine init_xcompact3d(ndt_max)
   use variables, only : p_row, p_col
   use variables, only : test_mode
   use variables, only : nstat, nprobe, nvisu
+  use variables, only : ph1, ph2, ph3, phG
+
 
   implicit none
 
@@ -166,9 +167,9 @@ subroutine init_xcompact3d(ndt_max)
   call case_listing()
 
   call decomp_2d_init(nx,ny,nz,p_row,p_col)
-  call init_coarser_mesh_statS(nstat,nstat,nstat,.true.)    !start from 1 == true
-  call init_coarser_mesh_statV(nvisu,nvisu,nvisu,.true.)    !start from 1 == true
-  call init_coarser_mesh_statP(nprobe,nprobe,nprobe,.true.) !start from 1 == true
+  !call init_coarser_mesh_statS(nstat,nstat,nstat,.true.)    !start from 1 == true
+  !call init_coarser_mesh_statV(nvisu,nvisu,nvisu,.true.)    !start from 1 == true
+  !call init_coarser_mesh_statP(nprobe,nprobe,nprobe,.true.) !start from 1 == true
   !div: nx ny nz --> nxm ny nz --> nxm nym nz --> nxm nym nzm
   call decomp_info_init(nxm, nym, nzm, ph1)
   !gradp: nxm nym nzm -> nxm nym nz --> nxm ny nz --> nx ny nz
@@ -191,8 +192,7 @@ endsubroutine init_xcompact3d
 subroutine finalise_xcompact3d(flag)
 
   use MPI
-  use decomp_2d, only : decomp_2d_finalize, decomp_info_finalize, &
-                        ph1, ph2, ph3, phG
+  use decomp_2d, only : decomp_2d_finalize, decomp_info_finalize
   use decomp_2d_poisson, only : decomp_2d_poisson_finalize
   use x3d_operator_x_data, only : x3d_operator_x_data_finalize
   use x3d_operator_y_data, only : x3d_operator_y_data_finalize
@@ -200,6 +200,7 @@ subroutine finalise_xcompact3d(flag)
   use x3d_operator_1d, only : x3d_operator_1d_finalize
   use x3d_derive, only : x3d_derive_finalize
   use var, only : var_finalize
+  use variables, only : ph1, ph2, ph3, phG
 
   implicit none
 
